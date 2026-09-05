@@ -1,0 +1,40 @@
+# --- Node / Expo / React Native (mobile/) ---
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+.metro-health-check*
+
+# --- Python (backend/) ---
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+
+# --- Env / secrets (all sub-projects) ---
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- Supabase CLI local state ---
+supabase/.branches
+supabase/.temp
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
