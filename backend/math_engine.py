@@ -12,8 +12,32 @@ Implements:
 import math
 from typing import Dict, List, Optional, Tuple
 import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.optimize import brentq
+import joblib
+from pathlib import Path
+import logging
+
+from config import settings
+from ml_pipeline.market_classifier import classify_market
+
+MODEL_DIR = Path(__file__).parent / "models"
+_ml_models = {}
+
+def get_ml_model(model_name="football_xgb_v1.joblib"):
+    if model_name in _ml_models:
+        return _ml_models[model_name]
+    
+    model_path = MODEL_DIR / model_name
+    if model_path.exists():
+        try:
+            _ml_models[model_name] = joblib.load(model_path)
+            logging.info(f"Loaded ML model: {model_name}")
+            return _ml_models[model_name]
+        except Exception as e:
+            logging.warning(f"Failed to load ML model {model_name}: {e}")
+    return None
 
 
 # ==========================================
@@ -217,7 +241,7 @@ class FootballMatchModel:
                 if h >= 1 and a >= 1:
                     prob_btts += p
 
-        return {
+        probs = {
             "over_line": round(float(prob_over), 4),
             "under_line": round(float(prob_under), 4),
             "home_win": round(float(prob_home_win), 4),
@@ -226,6 +250,44 @@ class FootballMatchModel:
             "btts_yes": round(float(prob_btts), 4),
             "btts_no": round(float(1.0 - prob_btts), 4),
         }
+        
+        return probs
+
+    @staticmethod
+    def adjust_probability_with_ml(
+        market_type: str, 
+        sportsbook_odds: float, 
+        base_prob: float
+    ) -> float:
+        """
+        Takes the heuristic baseline probability and asks the trained ML model
+        (if available and enabled) for an adjusted true probability. Gated by
+        settings.ML_BLEND_ENABLED so an unvalidated model can never silently
+        affect real predictions until explicitly turned on.
+        """
+        if not settings.ML_BLEND_ENABLED:
+            return base_prob
+
+        model = get_ml_model("football_xgb_v1.joblib")
+        if not model or sportsbook_odds <= 1.0:
+            return base_prob
+
+        implied_prob = 1.0 / sportsbook_odds
+        is_over_under, is_1x2 = classify_market(market_type)
+
+        try:
+            features = pd.DataFrame([{
+                'implied_prob': implied_prob,
+                'is_over_under': is_over_under,
+                'is_1x2': is_1x2,
+            }])
+            ml_prob = model.predict_proba(features)[0][1]
+
+            weight = settings.ML_BLEND_WEIGHT
+            return float((weight * ml_prob) + ((1.0 - weight) * base_prob))
+        except Exception as e:
+            logging.warning(f"ML adjustment failed: {e}")
+            return base_prob
 
 
 # ==========================================

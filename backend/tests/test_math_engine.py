@@ -10,6 +10,8 @@ import pytest
 # Add parent backend directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import math_engine
+from config import settings
 from math_engine import (
     american_to_decimal,
     decimal_to_american,
@@ -142,3 +144,41 @@ def test_parlay_metrics():
     assert parlay["total_sportsbook_odds"] == pytest.approx(3.80, abs=1e-2)
     assert parlay["correlation_score"] == 1.10
     assert parlay["combined_ev_percentage"] > 0
+
+
+def test_ml_blend_disabled_by_default_returns_base_prob(monkeypatch):
+    # Off by default: an unvalidated model must never silently affect real predictions.
+    monkeypatch.setattr(settings, "ML_BLEND_ENABLED", False)
+    result = FootballMatchModel.adjust_probability_with_ml(
+        market_type="Over 2.5", sportsbook_odds=1.90, base_prob=0.55
+    )
+    assert result == 0.55
+
+
+def test_ml_blend_enabled_without_model_returns_base_prob(monkeypatch):
+    monkeypatch.setattr(settings, "ML_BLEND_ENABLED", True)
+    monkeypatch.setattr(math_engine, "get_ml_model", lambda name="football_xgb_v1.joblib": None)
+    result = FootballMatchModel.adjust_probability_with_ml(
+        market_type="Over 2.5", sportsbook_odds=1.90, base_prob=0.55
+    )
+    assert result == 0.55
+
+
+def test_ml_blend_uses_configured_weight_and_classifies_under_correctly(monkeypatch):
+    class FakeModel:
+        def predict_proba(self, features):
+            # This is the exact bug case: an "Under" market must still be
+            # classified is_over_under=1, matching how training data is labeled.
+            assert features.iloc[0]["is_over_under"] == 1
+            assert features.iloc[0]["is_1x2"] == 0
+            return [[0.2, 0.8]]  # ml_prob = 0.8
+
+    monkeypatch.setattr(settings, "ML_BLEND_ENABLED", True)
+    monkeypatch.setattr(settings, "ML_BLEND_WEIGHT", 0.3)
+    monkeypatch.setattr(math_engine, "get_ml_model", lambda name="football_xgb_v1.joblib": FakeModel())
+
+    result = FootballMatchModel.adjust_probability_with_ml(
+        market_type="Under 2.5", sportsbook_odds=1.90, base_prob=0.50
+    )
+    expected = (0.3 * 0.8) + (0.7 * 0.50)
+    assert result == pytest.approx(expected, abs=1e-6)

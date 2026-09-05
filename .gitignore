@@ -23,6 +23,13 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
+# --- ML pipeline artifacts & scraped personal betting data (backend/) ---
+# Never commit: trained models are unvalidated/synthetic until proven, and
+# scraped bet history is real personal financial data.
+backend/data/
+backend/models/
+*.joblib
+
 # --- Env / secrets (all sub-projects) ---
 .env
 .env.local

@@ -43,6 +43,74 @@ class Settings(BaseSettings):
     # Free Tier Gating
     FREE_TIER_DAILY_PICKS: int = Field(default=2, description="Number of teaser picks accessible to non-paying users daily")
 
+    # ML Model Blending (backend/ml_pipeline/)
+    ML_BLEND_ENABLED: bool = Field(
+        default=False,
+        description="Master switch for blending the trained football_xgb model's probability "
+                     "into predictions. Off by default -- turn on only once a model trained on "
+                     "real (non-synthetic) historical data has been validated out-of-sample."
+    )
+    ML_BLEND_WEIGHT: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=1.0,
+        description="Weight given to the ML model's probability vs. the analytical heuristic "
+                     "when ML_BLEND_ENABLED is True. Starts conservative (favoring the proven "
+                     "heuristic) until the model demonstrates real edge on held-out data."
+    )
+
+    # Historical Data Pipeline (backend/historical_data/)
+    FOOTBALL_DATA_CO_UK_BASE_URL: str = Field(
+        default="https://www.football-data.co.uk/mmz4281",
+        description="Base URL for football-data.co.uk historical season CSVs. NOTE: this "
+                     "free, no-auth source has no explicit commercial-use license found (only "
+                     "source credits, no terms of use) -- confirm with the site owner before "
+                     "this pipeline's output ever influences live, paying-subscriber "
+                     "predictions. Safe for internal backtesting/model-validation in the "
+                     "meantime."
+    )
+    HISTORICAL_DATA_LEAGUES: str = Field(
+        default="E0",
+        description="Comma-separated football-data.co.uk league codes to fetch (E0 = EPL). "
+                     "Scoped to EPL only for now; multi-league is a future extension."
+    )
+    HISTORICAL_DATA_START_SEASON: int = Field(
+        default=1993,
+        description="Earliest season start-year to fetch (1993 = 1993/94, the first EPL "
+                     "season in football-data.co.uk's archive)."
+    )
+    HISTORICAL_DATA_END_SEASON: Optional[int] = Field(
+        default=None,
+        description="Latest season start-year to fetch (None = auto-detect the current "
+                     "season). Set explicitly to freeze a dataset snapshot for reproducible "
+                     "backtests."
+    )
+    HISTORICAL_DATA_CACHE_DIR: str = Field(
+        default="data/raw/football_data_co_uk",
+        description="Directory (relative to backend/) for cached season CSVs. Lives under "
+                     "backend/data/, already excluded by .gitignore."
+    )
+    HISTORICAL_DATA_PROCESSED_DIR: str = Field(
+        default="data/processed",
+        description="Directory (relative to backend/) for the assembled historical dataset CSV."
+    )
+    HISTORICAL_ROLLING_WINDOWS: str = Field(
+        default="3,5,10",
+        description="Comma-separated rolling-form window sizes (in matches) for pre-match form."
+    )
+    HISTORICAL_MIN_ROLLING_WINDOW_REQUIRED: int = Field(
+        default=5,
+        description="Minimum rolling window that must have sufficient prior-match history for "
+                     "a row to be kept in the training dataset; rows lacking this many prior "
+                     "matches for either team are dropped, never imputed."
+    )
+    HISTORICAL_DATA_REQUEST_DELAY_SECONDS: float = Field(
+        default=1.0,
+        description="Delay between sequential football-data.co.uk downloads. This host has "
+                     "been observed returning HTTP 429 after only a handful of rapid requests "
+                     "-- fetch sequentially, never in parallel."
+    )
+
     # API / CORS
     INTERNAL_API_KEY: Optional[str] = Field(
         default=None,
