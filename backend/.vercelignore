@@ -1,0 +1,11 @@
+# Not needed by the deployed API. Keep ml_pipeline/ (math_engine imports
+# ml_pipeline.market_classifier at runtime).
+tests/
+data/
+models/
+venv/
+.venv/
+.pytest_cache/
+__pycache__/
+requirements-ml.txt
+requirements-dev.txt

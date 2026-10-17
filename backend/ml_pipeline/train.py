@@ -17,7 +17,7 @@ try:
     XGB_AVAILABLE = True
 except ImportError:
     XGB_AVAILABLE = False
-    print("XGBoost not installed. Please install with `pip install xgboost`.")
+    print("XGBoost not installed. Install the ML deps with `pip install -r requirements-ml.txt`.")
 
 from betting_simulation import (
     DEFAULT_MIN_MEANINGFUL_BETS,
