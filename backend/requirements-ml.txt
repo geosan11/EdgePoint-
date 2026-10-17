@@ -1,0 +1,7 @@
+# Offline ML training, backtesting and bookie scraping (backend/ml_pipeline/).
+# Not needed by the API server and not installed on Vercel.
+-r requirements.txt
+scikit-learn>=1.4.0
+xgboost>=2.0.0
+playwright>=1.41.0
+playwright-stealth>=1.0.6

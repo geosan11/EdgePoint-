@@ -1,3 +1,6 @@
+# Runtime dependencies for the FastAPI server (main.py).
+# This is the file Vercel installs, so keep it to what the API actually imports.
+# Training / scraping deps live in requirements-ml.txt, test deps in requirements-dev.txt.
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
@@ -5,12 +8,7 @@ httpx>=0.26.0
 supabase>=2.3.0
 numpy>=1.26.0
 scipy>=1.11.0
-fastapi>=0.109.0
-uvicorn>=0.27.0
-pytest>=8.0.0
-scikit-learn>=1.4.0
-xgboost>=2.0.0
 pandas>=2.2.0
 joblib>=1.3.0
-playwright>=1.41.0
-playwright-stealth>=1.0.6
+fastapi>=0.109.0
+uvicorn>=0.27.0

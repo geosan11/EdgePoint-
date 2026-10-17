@@ -40,8 +40,14 @@ python -m venv venv
 # Mac / Linux:
 source venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r requirements.txt       # API server only (what Vercel installs)
+pip install -r requirements-dev.txt   # adds ML training, scraping and pytest
 ```
+
+Dependency files:
+- `requirements.txt`: runtime deps for the FastAPI server. Keep this lean, Vercel bundles it and has a 500 MB limit.
+- `requirements-ml.txt`: adds scikit-learn, xgboost, playwright and playwright-stealth for `ml_pipeline/` training, backtesting and scraping.
+- `requirements-dev.txt`: everything in `requirements-ml.txt` plus pytest, for running the full test suite.
 
 ### 2. Run Tests
 ```bash

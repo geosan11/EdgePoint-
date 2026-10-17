@@ -72,7 +72,7 @@ Each item below is backed by code in this repo.
 ```bash
 cd backend
 python -m venv venv && source venv/bin/activate   # Windows: .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt               # full set incl. ML + tests; requirements.txt is API-only
 cp .env.example .env                              # MOCK_MODE=True works with no API keys
 
 python main.py --run-once                 # one pipeline run, prints a summary
@@ -102,7 +102,7 @@ Run the files in `supabase/migrations/` in order (`01_init_schema`, `02_rls_poli
 ## Tests
 
 ```bash
-cd backend && pytest tests/ -v
+cd backend && pip install -r requirements-dev.txt && pytest tests/ -v
 ```
 
 The backend has 121 pytest tests. They cover the math engine, models, config, odds fetcher, Supabase sync, the FastAPI routes, the historical-data pipeline, the market classifier, the backtest, the betting simulation and walk-forward training. All 121 passed in a local run in October 2026. The mobile app has no automated tests yet.
