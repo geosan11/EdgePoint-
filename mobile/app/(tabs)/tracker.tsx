@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { Bookmark, Calculator, CheckCircle2, Flame, Layers, Trash2, TrendingUp, X } from 'lucide-react-native';
+import { Bookmark, Calculator, Check, CheckCircle2, Flame, Layers, Trash2, TrendingUp, X } from 'lucide-react-native';
 import { DailySlipCard } from '../../components/DailySlipCard';
-import { Button, Card, MetricTile, Text } from '../../components/ui';
+import { Badge, Button, Card, MetricTile, Text } from '../../components/ui';
 import { getDailySlip } from '../../lib/supabase';
 import { CuratedParlay, TrackerBet } from '../../lib/types';
 import { useBetStore } from '../../stores/useBetStore';
@@ -21,6 +21,8 @@ export default function TrackerScreen() {
     currency,
     trackerBets,
     saveSlipToTracker,
+    settleBet,
+    deleteBet,
   } = useBetStore();
   const { tokens } = useTheme();
 
@@ -270,49 +272,100 @@ export default function TrackerScreen() {
 
           {/* Settled & Active Bets */}
           <Text variant="headlineSm" style={styles.sectionTitle}>
-            Active & Logged Bets
+            Active & Logged Bets ({trackerBets.length})
           </Text>
 
-          {trackerBets.map((bet) => (
-            <Card key={bet.id} style={styles.betCard}>
-              <View style={styles.betHeader}>
-                <View style={styles.betLeft}>
-                  <Text variant="bodySm" tone="secondary">
-                    {bet.fixture} · {bet.date}
-                  </Text>
-                  <Text variant="title">{bet.prop}</Text>
-                </View>
-
-                <View style={styles.betRight}>
-                  <Text
-                    variant="badge"
-                    tone={bet.result === 'won' ? 'positive' : bet.result === 'lost' ? 'negative' : 'warning'}
-                  >
-                    {bet.result.toUpperCase()}
-                  </Text>
-                  <Text variant="dataMd" tone="brand">
-                    @{bet.odds.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={[styles.betFooter, { borderTopColor: tokens.colors.border }]}>
-                <Text variant="dataSm" tone="tertiary">
-                  Stake: {bet.stakeUnits}u ({currencySymbol}{bet.stake.toLocaleString()})
-                </Text>
-                <Text
-                  variant="dataSm"
-                  tone={bet.pnl > 0 ? 'brand' : bet.pnl < 0 ? 'negative' : 'secondary'}
-                >
-                  {bet.result === 'won'
-                    ? `+${currencySymbol}${bet.pnl.toLocaleString()}`
-                    : bet.result === 'lost'
-                      ? `-${currencySymbol}${Math.abs(bet.pnl).toLocaleString()}`
-                      : 'Pending Settlement'}
-                </Text>
-              </View>
+          {trackerBets.length === 0 ? (
+            <Card style={styles.emptyCard}>
+              <TrendingUp size={32} color={tokens.colors.borderStrong} />
+              <Text variant="title" tone="secondary" style={styles.emptyTitle}>
+                No Bets Recorded
+              </Text>
+              <Text variant="bodySm" tone="tertiary" style={styles.emptyDesc}>
+                Log your custom tickets or individual value picks from the Betslip to track your edge over time.
+              </Text>
             </Card>
-          ))}
+          ) : (
+            trackerBets.map((bet) => (
+              <Card key={bet.id} style={styles.betCard}>
+                <View style={styles.betHeader}>
+                  <View style={styles.betLeft}>
+                    <Text variant="bodySm" tone="secondary">
+                      {bet.fixture} · {bet.date}
+                    </Text>
+                    <Text variant="title">{bet.prop}</Text>
+                  </View>
+
+                  <View style={styles.betRight}>
+                    <Badge
+                      label={bet.result.toUpperCase()}
+                      tone={bet.result === 'won' ? 'positive' : bet.result === 'lost' ? 'negative' : 'warning'}
+                      size="sm"
+                    />
+                    <Text variant="dataMd" tone="brand">
+                      @{bet.odds.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Settle Actions for Pending Bets */}
+                {bet.result === 'pending' ? (
+                  <View style={[styles.settleRow, { borderTopColor: tokens.colors.border }]}>
+                    <Text variant="label" tone="tertiary">
+                      Settle Outcome:
+                    </Text>
+                    <View style={styles.settleButtons}>
+                      <TouchableOpacity
+                        style={[styles.settleBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
+                        onPress={() => settleBet(bet.id, 'won')}
+                        activeOpacity={0.7}
+                      >
+                        <Check size={12} color={tokens.colors.primary} />
+                        <Text variant="badge" tone="brand">
+                          WON
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.settleBtn, { backgroundColor: tokens.colors.negativeSoft, borderColor: tokens.colors.negative }]}
+                        onPress={() => settleBet(bet.id, 'lost')}
+                        activeOpacity={0.7}
+                      >
+                        <X size={12} color={tokens.colors.negative} />
+                        <Text variant="badge" tone="negative">
+                          LOST
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.deleteBtn, { borderColor: tokens.colors.border }]}
+                        onPress={() => deleteBet(bet.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Trash2 size={13} color={tokens.colors.textTertiary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : null}
+
+                <View style={[styles.betFooter, { borderTopColor: tokens.colors.border }]}>
+                  <Text variant="dataSm" tone="tertiary">
+                    Stake: {bet.stakeUnits}u ({currencySymbol}{bet.stake.toLocaleString()})
+                  </Text>
+                  <Text
+                    variant="dataSm"
+                    tone={bet.pnl > 0 ? 'brand' : bet.pnl < 0 ? 'negative' : 'secondary'}
+                  >
+                    {bet.result === 'won'
+                      ? `+${currencySymbol}${bet.pnl.toLocaleString()}`
+                      : bet.result === 'lost'
+                        ? `-${currencySymbol}${Math.abs(bet.pnl).toLocaleString()}`
+                        : 'Pending Settlement'}
+                  </Text>
+                </View>
+              </Card>
+            ))
+          )}
         </View>
       ) : null}
 
@@ -453,6 +506,32 @@ const styles = StyleSheet.create({
   betRight: {
     alignItems: 'flex-end',
     gap: 4,
+  },
+  settleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+  },
+  settleButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  deleteBtn: {
+    padding: 4,
+    borderRadius: 4,
+    borderWidth: 1,
   },
   betFooter: {
     flexDirection: 'row',

@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
+    flex: 1,
     fontSize: 11,
     fontWeight: '500',
   },

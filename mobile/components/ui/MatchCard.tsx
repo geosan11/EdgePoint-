@@ -15,22 +15,37 @@ interface MatchCardProps {
 
 export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
   const { tokens } = useTheme();
-  const { addCustomLeg, isLegInSlip } = useBetStore();
+  const { toggleCustomLeg, isLegInSlip } = useBetStore();
 
   const isLive = match.status === 'live';
   const leagueTone = match.league === 'NBA' ? 'positive' : 'info';
 
-  const handleOddPress = (marketName: string, pick: string, odds: number, book: string) => {
+  // Consistent Leg IDs for Slip Matching & Toggling
+  const spreadLegId = `${match.id}_spread_${match.awayTeam}`;
+  const totalLegId = `${match.id}_total_over`;
+  const mlLegId = `${match.id}_ml_${match.homeTeam}`;
+
+  const isSpreadSelected = isLegInSlip(spreadLegId);
+  const isTotalSelected = isLegInSlip(totalLegId);
+  const isMlSelected = isLegInSlip(mlLegId);
+
+  const handleOddPress = (
+    legId: string,
+    marketName: string,
+    pick: string,
+    odds: number,
+    book: string
+  ) => {
     if (onSelectOdd) {
       onSelectOdd(marketName, pick, odds, book);
     } else {
-      addCustomLeg({
-        prediction_id: `${match.id}_${marketName}_${pick}`,
+      toggleCustomLeg({
+        prediction_id: legId,
         fixture: `${match.awayTeam} @ ${match.homeTeam}`,
         prop: `${marketName}: ${pick}`,
         selection: pick,
         odds,
-        ev: match.modelEdge ? `+${match.modelEdge.edgePct}% EV` : '+0.0% EV',
+        ev: match.modelEdge?.market === marketName ? `+${match.modelEdge.edgePct}% EV` : '+0.0% EV',
         bookmaker: book,
       });
     }
@@ -99,7 +114,7 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
         </View>
       </View>
 
-      {/* Quick Odds Grid: Touch targets >= 44px */}
+      {/* Quick Odds Grid: Touch targets >= 44px with accurate toggle states */}
       <View style={[styles.oddsContainer, { borderTopColor: tokens.colors.border }]}>
         {match.markets.spread ? (
           <View style={styles.oddsCol}>
@@ -107,9 +122,12 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
               label={`Spread ${match.markets.spread.line > 0 ? `+${match.markets.spread.line}` : match.markets.spread.line}`}
               odds={match.markets.spread.awayOdds}
               bookmaker={match.markets.spread.bestBook}
-              isSelected={isLegInSlip(`${match.id}_spread_${match.awayTeam}`)}
+              hasEdge={match.modelEdge?.market === 'Spread'}
+              edgeText={match.modelEdge?.market === 'Spread' ? `+${match.modelEdge.edgePct}%` : undefined}
+              isSelected={isSpreadSelected}
               onPress={() =>
                 handleOddPress(
+                  spreadLegId,
                   'Spread',
                   `${match.awayTeam} ${match.markets.spread?.line}`,
                   match.markets.spread!.awayOdds,
@@ -128,9 +146,10 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
               bookmaker={match.markets.total.bestBook}
               hasEdge={match.modelEdge?.market === 'Total'}
               edgeText={match.modelEdge?.market === 'Total' ? `+${match.modelEdge.edgePct}%` : undefined}
-              isSelected={isLegInSlip(`${match.id}_total_Over`)}
+              isSelected={isTotalSelected}
               onPress={() =>
                 handleOddPress(
+                  totalLegId,
                   'Total',
                   `Over ${match.markets.total?.line}`,
                   match.markets.total!.overOdds,
@@ -149,9 +168,10 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
               bookmaker={match.markets.moneyline.bestBook}
               hasEdge={match.modelEdge?.market === 'Moneyline'}
               edgeText={match.modelEdge?.market === 'Moneyline' ? `+${match.modelEdge.edgePct}%` : undefined}
-              isSelected={isLegInSlip(`${match.id}_ml_${match.homeTeam}`)}
+              isSelected={isMlSelected}
               onPress={() =>
                 handleOddPress(
+                  mlLegId,
                   'Moneyline',
                   `${match.homeTeam} ML`,
                   match.markets.moneyline!.home,

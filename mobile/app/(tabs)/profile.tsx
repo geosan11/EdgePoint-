@@ -27,8 +27,20 @@ export default function ProfileScreen() {
   const [unitInput, setUnitInput] = useState(unitSize.toString());
 
   const handleUpdateBankroll = () => {
-    const b = parseFloat(bankrollInput) || 100000;
-    const u = parseFloat(unitInput) || 1000;
+    const b = parseFloat(bankrollInput);
+    const u = parseFloat(unitInput);
+    if (isNaN(b) || b <= 0) {
+      Alert.alert('Invalid Bankroll', 'Please enter a positive bankroll amount.');
+      return;
+    }
+    if (isNaN(u) || u <= 0) {
+      Alert.alert('Invalid Unit Size', 'Please enter a positive unit size.');
+      return;
+    }
+    if (u > b) {
+      Alert.alert('Unit Size Exceeded', '1 unit cannot exceed your total bankroll.');
+      return;
+    }
     setBankroll(b);
     setUnitSize(u);
     Alert.alert('Parameters Saved', 'Your bankroll and Kelly staking model parameters have been updated.');

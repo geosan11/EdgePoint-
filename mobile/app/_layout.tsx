@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { PaywallModal } from '../components/PaywallModal';
 import { checkProEntitlement, initRevenueCat } from '../lib/revenuecat';
@@ -18,9 +19,6 @@ export default function RootLayout() {
   const fontsLoaded = useAppFonts();
 
   useEffect(() => {
-    // Initialize RevenueCat, then restore Pro state for an already-entitled user
-    // (e.g. reinstalling the app or launching on a new device) instead of leaving
-    // everything locked until they manually tap "Restore Purchases".
     (async () => {
       await initRevenueCat();
       const isPro = await checkProEntitlement();
@@ -39,19 +37,21 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: tokens.colors.background }]} onLayout={onLayoutRootView}>
-      <StatusBar style={scheme === 'light' ? 'dark' : 'light'} backgroundColor={tokens.colors.background} />
-      <Header />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: tokens.colors.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <PaywallModal />
-    </View>
+    <SafeAreaProvider>
+      <View style={[styles.container, { backgroundColor: tokens.colors.background }]} onLayout={onLayoutRootView}>
+        <StatusBar style={scheme === 'light' ? 'dark' : 'light'} backgroundColor={tokens.colors.background} />
+        <Header />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: tokens.colors.background },
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <PaywallModal />
+      </View>
+    </SafeAreaProvider>
   );
 }
 

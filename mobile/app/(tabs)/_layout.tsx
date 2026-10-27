@@ -37,6 +37,13 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Fixtures',
+          tabBarBadge: 2,
+          tabBarBadgeStyle: {
+            backgroundColor: tokens.colors.primary,
+            color: tokens.colors.onPrimary,
+            fontSize: 9,
+            fontWeight: '700',
+          },
           tabBarIcon: ({ color, size }) => <Calendar size={19} color={color} />,
         }}
       />
@@ -46,6 +53,13 @@ export default function TabLayout() {
         name="edges"
         options={{
           title: 'Edges',
+          tabBarBadge: 6,
+          tabBarBadgeStyle: {
+            backgroundColor: tokens.colors.primary,
+            color: tokens.colors.onPrimary,
+            fontSize: 9,
+            fontWeight: '700',
+          },
           tabBarIcon: ({ color, size }) => <TrendingUp size={19} color={color} />,
         }}
       />

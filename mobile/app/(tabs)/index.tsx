@@ -108,6 +108,26 @@ export default function FixturesScreen() {
         data={filteredFixtures}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <MatchCard match={item} />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Radio size={32} color={tokens.colors.borderStrong} />
+            <Text variant="title" tone="secondary" style={{ marginTop: 10, marginBottom: 4 }}>
+              No Fixtures in Selected Filter
+            </Text>
+            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 12 }}>
+              There are currently no active matches matching this filter. Switch to all slates to view upcoming games.
+            </Text>
+            <TouchableOpacity
+              style={[styles.emptyResetBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
+              onPress={() => setFilter('all')}
+              activeOpacity={0.7}
+            >
+              <Text variant="badge" tone="brand">
+                View All Slates
+              </Text>
+            </TouchableOpacity>
+          </View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -163,5 +183,17 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 4,
     paddingBottom: 24,
+  },
+  emptyContainer: {
+    padding: 32,
+    marginHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyResetBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
 });

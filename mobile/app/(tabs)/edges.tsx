@@ -141,6 +141,29 @@ export default function EdgesScreen() {
         data={filteredPredictions}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <EdgeCard prediction={item} />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Sparkles size={32} color={tokens.colors.borderStrong} />
+            <Text variant="title" tone="secondary" style={{ marginTop: 10, marginBottom: 4 }}>
+              No Picks in Selected Market
+            </Text>
+            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 12 }}>
+              No current +EV predictions match your active sport or market filters.
+            </Text>
+            <TouchableOpacity
+              style={[styles.emptyResetBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
+              onPress={() => {
+                setSport('all');
+                setMarket('all');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text variant="badge" tone="brand">
+                Reset All Filters
+              </Text>
+            </TouchableOpacity>
+          </View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -209,5 +232,17 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 4,
     paddingBottom: 24,
+  },
+  emptyContainer: {
+    padding: 32,
+    marginHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyResetBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
 });

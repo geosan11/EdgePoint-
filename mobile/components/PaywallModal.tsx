@@ -7,7 +7,7 @@ import { useTheme } from '../stores/useThemeStore';
 import { Badge, Button, Card, Text } from './ui';
 
 export function PaywallModal() {
-  const { isPaywallVisible, closePaywall, setPro } = useBetStore();
+  const { isPaywallVisible, closePaywall, setPro, currency } = useBetStore();
   const { tokens } = useTheme();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
   const [loading, setLoading] = useState(false);
@@ -45,6 +45,10 @@ export function PaywallModal() {
     'Proprietary EdgeScores (0-100), EdgeDeltas (Δ), and Kelly Criterion bankroll sizing',
     'Real-time odds updates & instant line value alerts',
   ];
+
+  const annualPrice = currency === 'USD' ? '$79.99' : '₦105,000';
+  const annualSub = currency === 'USD' ? '~$6.67 / month billed annually' : '~₦8,750 / month billed annually';
+  const monthlyPrice = currency === 'USD' ? '$11.99' : '₦14,900';
 
   return (
     <Modal visible={isPaywallVisible} animationType="slide" transparent onRequestClose={closePaywall}>
@@ -135,10 +139,10 @@ export function PaywallModal() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
                   <Text variant="title">Annual Access</Text>
                   <Text variant="dataLg" tone="brand">
-                    ₦105,000<Text variant="dataSm" tone="secondary">/yr</Text>
+                    {annualPrice}<Text variant="dataSm" tone="secondary">/yr</Text>
                   </Text>
                 </View>
-                <Text variant="bodySm" tone="secondary">~₦8,750 / month billed annually</Text>
+                <Text variant="bodySm" tone="secondary">{annualSub}</Text>
               </TouchableOpacity>
 
               {/* Monthly Plan */}
@@ -156,7 +160,7 @@ export function PaywallModal() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
                   <Text variant="title">Monthly Flexibility</Text>
                   <Text variant="dataLg" tone="brand">
-                    ₦14,900<Text variant="dataSm" tone="secondary">/mo</Text>
+                    {monthlyPrice}<Text variant="dataSm" tone="secondary">/mo</Text>
                   </Text>
                 </View>
                 <Text variant="bodySm" tone="secondary">Cancel anytime in App Store or Play Store</Text>

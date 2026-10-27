@@ -2,23 +2,32 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Crown, Layers, Moon, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
 import { Badge, Text } from './ui';
 
 export function Header() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isPro, openPaywall, slipLegs, currency, setCurrency } = useBetStore();
   const { tokens, scheme, setMode } = useTheme();
 
   const toggleScheme = () => setMode(scheme === 'dark' ? 'light' : 'dark');
   const toggleCurrency = () => setCurrency(currency === 'NGN' ? 'USD' : 'NGN');
 
+  const topInset = Math.max(insets.top, 8);
+
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: tokens.colors.background, borderBottomColor: tokens.colors.border },
+        {
+          backgroundColor: tokens.colors.background,
+          borderBottomColor: tokens.colors.border,
+          paddingTop: topInset,
+          height: 54 + topInset,
+        },
       ]}
     >
       {/* Brand Logo & Live Pulse */}
@@ -96,7 +105,6 @@ export function Header() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

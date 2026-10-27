@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Flame, Layers, Lock, Sparkles } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { CuratedParlay } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
@@ -11,6 +12,7 @@ interface DailySlipCardProps {
 }
 
 export function DailySlipCard({ parlay }: DailySlipCardProps) {
+  const router = useRouter();
   const { isPro, openPaywall } = useBetStore();
   const { tokens } = useTheme();
 
@@ -22,6 +24,7 @@ export function DailySlipCard({ parlay }: DailySlipCardProps) {
       return;
     }
     useBetStore.setState({ slipLegs: parlay.legs });
+    router.push('/(tabs)/tracker');
   };
 
   return (

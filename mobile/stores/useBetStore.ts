@@ -14,6 +14,7 @@ interface BetStoreState {
   slipLegs: ParlayLeg[];
   addLegToSlip: (prediction: Prediction) => void;
   addCustomLeg: (leg: ParlayLeg) => void;
+  toggleCustomLeg: (leg: ParlayLeg) => void;
   removeLegFromSlip: (predictionId: string) => void;
   clearSlip: () => void;
   isLegInSlip: (predictionId: string) => boolean;
@@ -29,6 +30,8 @@ interface BetStoreState {
   setCurrency: (c: 'USD' | 'NGN') => void;
   setKellyFraction: (f: number) => void;
   saveSlipToTracker: (stakeUnits: number) => void;
+  settleBet: (betId: string, result: 'won' | 'lost') => void;
+  deleteBet: (betId: string) => void;
 
   // Subscription State
   isPro: boolean;
@@ -53,7 +56,8 @@ export const useBetStore = create<BetStoreState>((set, get) => ({
   selectedSport: 'all',
   selectedMarket: 'all',
   minEdgeScore: 0,
-  setSport: (sport) => set({ selectedSport: sport }),
+  // Reset selectedMarket to 'all' when switching sports to avoid dead-end filters
+  setSport: (sport) => set({ selectedSport: sport, selectedMarket: 'all' }),
   setMarket: (market) => set({ selectedMarket: market }),
   setMinEdgeScore: (minEdgeScore) => set({ minEdgeScore }),
 
@@ -80,6 +84,16 @@ export const useBetStore = create<BetStoreState>((set, get) => ({
     const existing = get().slipLegs.find((l) => l.prediction_id === leg.prediction_id);
     if (existing) return;
     set((state) => ({ slipLegs: [...state.slipLegs, leg] }));
+  },
+  toggleCustomLeg: (leg) => {
+    const exists = get().slipLegs.some((l) => l.prediction_id === leg.prediction_id);
+    if (exists) {
+      set((state) => ({
+        slipLegs: state.slipLegs.filter((l) => l.prediction_id !== leg.prediction_id),
+      }));
+    } else {
+      set((state) => ({ slipLegs: [...state.slipLegs, leg] }));
+    }
   },
   removeLegFromSlip: (predictionId) => {
     set((state) => ({
@@ -158,17 +172,20 @@ export const useBetStore = create<BetStoreState>((set, get) => ({
   setCurrency: (currency) => set({ currency }),
   setKellyFraction: (kellyFraction) => set({ kellyFraction }),
   saveSlipToTracker: (stakeUnits) => {
-    const { slipLegs, unitSize, getSlipMetrics } = get();
+    const { slipLegs, unitSize, getSlipMetrics, bankroll } = get();
     if (slipLegs.length === 0) return;
     const metrics = getSlipMetrics();
+    const stakeAmount = stakeUnits * unitSize;
+    const isEpl = slipLegs.some((l) => l.fixture.toLowerCase().includes('arsenal') || l.fixture.toLowerCase().includes('chelsea') || l.fixture.toLowerCase().includes('liverpool') || l.fixture.toLowerCase().includes('city'));
+
     const newBet: TrackerBet = {
       id: `tb-${Date.now()}`,
       date: 'Just now',
       fixture: slipLegs.length === 1 ? slipLegs[0].fixture : `Custom Parlay (${slipLegs.length} Legs)`,
       prop: slipLegs.map((l) => l.prop).join(' + '),
-      sport: 'basketball',
+      sport: isEpl ? 'football' : 'basketball',
       odds: metrics.totalOdds,
-      stake: stakeUnits * unitSize,
+      stake: stakeAmount,
       stakeUnits,
       result: 'pending',
       pnl: 0,
@@ -177,6 +194,27 @@ export const useBetStore = create<BetStoreState>((set, get) => ({
     set((state) => ({
       trackerBets: [newBet, ...state.trackerBets],
       slipLegs: [],
+      bankroll: Math.max(0, bankroll - stakeAmount),
+    }));
+  },
+  settleBet: (betId, result) => {
+    const { trackerBets, bankroll } = get();
+    const bet = trackerBets.find((b) => b.id === betId);
+    if (!bet || bet.result !== 'pending') return;
+
+    const pnl = result === 'won' ? Math.round(bet.stake * (bet.odds - 1)) : -bet.stake;
+    const returnAmount = result === 'won' ? Math.round(bet.stake * bet.odds) : 0;
+
+    set({
+      trackerBets: trackerBets.map((b) =>
+        b.id === betId ? { ...b, result, pnl } : b
+      ),
+      bankroll: bankroll + returnAmount,
+    });
+  },
+  deleteBet: (betId) => {
+    set((state) => ({
+      trackerBets: state.trackerBets.filter((b) => b.id !== betId),
     }));
   },
 
