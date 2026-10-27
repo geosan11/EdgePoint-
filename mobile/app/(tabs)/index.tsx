@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Sparkles } from 'lucide-react-native';
-import { EdgeCard } from '../../components/EdgeCard';
-import { Text } from '../../components/ui';
-import { getPredictions } from '../../lib/supabase';
-import { MarketType, Prediction, Sport } from '../../lib/types';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Activity, Flame, Radio } from 'lucide-react-native';
+import { MatchCard, Text } from '../../components/ui';
+import { getFixtures } from '../../lib/supabase';
+import { MatchFixture, Sport } from '../../lib/types';
 import { useBetStore } from '../../stores/useBetStore';
 import { useTheme } from '../../stores/useThemeStore';
 
-export default function FeedScreen() {
-  const { selectedSport, setSport, selectedMarket, setMarket } = useBetStore();
+type FilterType = 'all' | 'nba' | 'epl' | 'live';
+
+export default function FixturesScreen() {
   const { tokens } = useTheme();
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [fixtures, setFixtures] = useState<MatchFixture[]>([]);
+  const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
-    const data = await getPredictions(selectedSport);
-    setPredictions(data);
+    const data = await getFixtures();
+    setFixtures(data);
   };
 
   useEffect(() => {
     loadData();
-  }, [selectedSport]);
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -29,77 +30,50 @@ export default function FeedScreen() {
     setRefreshing(false);
   };
 
-  // Filter by market if selected
-  const filteredPredictions = predictions.filter((p) => {
-    if (selectedMarket === 'all') return true;
-    return p.market_type === selectedMarket;
+  const filteredFixtures = fixtures.filter((f) => {
+    if (filter === 'all') return true;
+    if (filter === 'live') return f.status === 'live';
+    if (filter === 'nba') return f.league === 'NBA';
+    if (filter === 'epl') return f.league === 'Premier League';
+    return true;
   });
 
-  const sportsOptions: { label: string; value: Sport | 'all' }[] = [
+  const filterOptions: { label: string; value: FilterType }[] = [
     { label: 'All Slates', value: 'all' },
-    { label: 'Basketball 🏀', value: 'basketball' },
-    { label: 'Football ⚽', value: 'football' },
+    { label: 'Live In-Play', value: 'live' },
+    { label: 'NBA 🏀', value: 'nba' },
+    { label: 'Premier League ⚽', value: 'epl' },
   ];
 
-  const marketOptions: { label: string; value: MarketType | 'all' }[] = [
-    { label: 'All Markets', value: 'all' },
-    { label: 'Points', value: 'player_points' },
-    { label: 'Assists', value: 'player_assists' },
-    { label: 'PRA Combo', value: 'pra_combo' },
-    { label: 'Match Totals', value: 'match_total' },
-    { label: 'BTTS', value: 'btts' },
-  ];
+  const liveCount = fixtures.filter((f) => f.status === 'live').length;
+  const edgeCount = fixtures.filter((f) => !!f.modelEdge).length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: tokens.colors.background }}>
-      {/* Top Filter Bar: Sport Selector */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8, borderBottomWidth: 1, borderBottomColor: tokens.colors.border }}>
-        {sportsOptions.map((opt) => {
-          const active = selectedSport === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              style={{
-                flex: 1,
-                paddingVertical: 8,
-                borderRadius: tokens.radius.lg,
-                backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: active ? tokens.colors.primary : tokens.colors.border,
-              }}
-              onPress={() => setSport(opt.value)}
-              activeOpacity={0.8}
-            >
-              <Text variant="title" tone={active ? 'brand' : 'secondary'} style={{ fontSize: 12 }}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Sub-Filter: Market Types */}
-      <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: tokens.colors.border }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-          {marketOptions.map((m) => {
-            const active = selectedMarket === m.value;
+    <View style={[styles.screen, { backgroundColor: tokens.colors.background }]}>
+      {/* Top Filter Chips */}
+      <View style={[styles.filterBar, { borderBottomColor: tokens.colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {filterOptions.map((opt) => {
+            const active = filter === opt.value;
             return (
               <TouchableOpacity
-                key={m.value}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 5,
-                  borderRadius: tokens.radius.full,
-                  backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
-                  borderWidth: 1,
-                  borderColor: active ? tokens.colors.primary : tokens.colors.border,
-                }}
-                onPress={() => setMarket(m.value)}
-                activeOpacity={0.8}
+                key={opt.value}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
+                    borderColor: active ? tokens.colors.primary : tokens.colors.border,
+                  },
+                ]}
+                onPress={() => setFilter(opt.value)}
+                activeOpacity={0.7}
               >
-                <Text variant="label" tone={active ? 'brand' : 'secondary'}>
-                  {m.label}
+                <Text variant="title" tone={active ? 'brand' : 'secondary'} style={styles.chipText}>
+                  {opt.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -107,33 +81,33 @@ export default function FeedScreen() {
         </ScrollView>
       </View>
 
-      {/* Live Market Alert Banner */}
+      {/* Terminal Status Ribbon */}
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: tokens.colors.primarySoft,
-          borderWidth: 1,
-          borderColor: tokens.colors.primary,
-          marginHorizontal: 16,
-          marginVertical: 10,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: tokens.radius.lg,
-          gap: 8,
-        }}
+        style={[
+          styles.statusRibbon,
+          { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
+        ]}
       >
-        <Sparkles size={14} color={tokens.colors.primary} />
-        <Text variant="title" tone="brand" style={{ flex: 1, fontSize: 11 }}>
-          {filteredPredictions.length} +EV Discrepancies Detected Across Active Boards
-        </Text>
+        <View style={styles.ribbonItem}>
+          <Radio size={13} color={tokens.colors.primary} />
+          <Text variant="badge" tone="brand">
+            {liveCount} LIVE IN-PLAY
+          </Text>
+        </View>
+
+        <View style={styles.ribbonItem}>
+          <Flame size={13} color={tokens.colors.tertiary} />
+          <Text variant="badge" tone="secondary">
+            {edgeCount} +EV EDGES DETECTED
+          </Text>
+        </View>
       </View>
 
-      {/* Main Predictions Feed */}
+      {/* Fixtures List */}
       <FlatList
-        data={filteredPredictions}
+        data={filteredFixtures}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EdgeCard prediction={item} />}
+        renderItem={({ item }) => <MatchCard match={item} />}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -142,9 +116,52 @@ export default function FeedScreen() {
             colors={[tokens.colors.primary]}
           />
         }
-        contentContainerStyle={{ paddingTop: 4, paddingBottom: 20 }}
+        contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  filterBar: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  filterScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  statusRibbon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  ribbonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  listContainer: {
+    paddingTop: 4,
+    paddingBottom: 24,
+  },
+});

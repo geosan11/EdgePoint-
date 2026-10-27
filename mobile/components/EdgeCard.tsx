@@ -1,10 +1,10 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Check, Lock, Plus } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Check, ChevronDown, ChevronUp, Lock, Plus } from 'lucide-react-native';
 import { Prediction } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
-import { Badge, Button, Card, MetricTile, Text } from './ui';
+import { Badge, Button, Card, MetricTile, ProbabilityBar, StatRow, Text } from './ui';
 import { EdgeScoreBadge } from './EdgeScoreBadge';
 
 interface EdgeCardProps {
@@ -14,6 +14,7 @@ interface EdgeCardProps {
 export function EdgeCard({ prediction }: EdgeCardProps) {
   const { isPro, openPaywall, addLegToSlip, removeLegFromSlip, isLegInSlip } = useBetStore();
   const { tokens } = useTheme();
+  const [expanded, setExpanded] = useState(false);
 
   const isLocked = prediction.tier === 'pro' && !isPro;
   const inSlip = isLegInSlip(prediction.id);
@@ -26,14 +27,23 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
     }
   };
 
+  const leagueTone = prediction.sport === 'basketball' ? 'positive' : 'info';
+
   return (
     <Card style={styles.cardContainer}>
       {/* Top Header: League & Match Info */}
       <View style={[styles.cardHeader, { borderBottomColor: tokens.colors.border }]}>
-        <Badge label={prediction.league_name || prediction.sport.toUpperCase()} tone="info" />
-        <Text variant="bodySm" tone="secondary" style={styles.matchTitleText} numberOfLines={1}>
-          {prediction.match_title}
-        </Text>
+        <View style={styles.headerLeft}>
+          <Badge
+            label={prediction.league_name || (prediction.sport === 'basketball' ? 'NBA 🏀' : 'EPL ⚽')}
+            tone={leagueTone}
+            size="sm"
+          />
+          <Text variant="bodySm" tone="secondary" style={styles.matchTitleText} numberOfLines={1}>
+            {prediction.match_title}
+          </Text>
+        </View>
+
         <Text variant="dataSm" tone="tertiary">
           {prediction.commence_time}
         </Text>
@@ -42,96 +52,155 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
       {/* Main Prop Line & EdgeScore */}
       <View style={styles.propRow}>
         <View style={styles.propDetails}>
-          <Text variant="headlineSm">
+          <Text variant="headlineSm" numberOfLines={1}>
             {prediction.player_name ? prediction.player_name : prediction.match_title}
           </Text>
           <View style={styles.selectionRow}>
             <Text variant="dataMd" tone="brand">
               {prediction.selection} {prediction.line !== undefined ? prediction.line : ''}
             </Text>
-            <Text
-              variant="label"
-              tone="secondary"
-              style={[styles.marketTypeText, { backgroundColor: tokens.colors.surfaceInset }]}
-            >
-              {prediction.market_type.replace('_', ' ').toUpperCase()}
-            </Text>
+            <View style={[styles.marketPill, { backgroundColor: tokens.colors.surfaceInset }]}>
+              <Text variant="label" tone="secondary">
+                {prediction.market_type.replace('_', ' ').toUpperCase()}
+              </Text>
+            </View>
           </View>
         </View>
 
         <EdgeScoreBadge score={prediction.edge_score} size="md" />
       </View>
 
-      {/* Quantitative Breakdown: EV%, EdgeDelta, Odds Comparison */}
-      <Card elevation="inset" style={styles.metricsGrid}>
-        <MetricTile
-          label="EXP. VALUE"
-          value={`+${prediction.ev_percentage.toFixed(1)}%`}
-          tone="primary"
-        />
-        <MetricTile
-          label="EDGE DELTA (Δ)"
-          value={
-            prediction.edge_delta !== undefined
-              ? prediction.edge_delta > 0
-                ? `+${prediction.edge_delta}`
-                : `${prediction.edge_delta}`
-              : '--'
-          }
-          sublabel={
-            prediction.model_projected_stat !== undefined && prediction.model_projected_stat !== null
-              ? `Proj: ${prediction.model_projected_stat}`
-              : undefined
-          }
-          tone="secondary"
-        />
-        <MetricTile label="BEST ODDS" value={prediction.sportsbook_odds.toFixed(2)} sublabel={prediction.best_bookmaker} />
-        <MetricTile label="STAKE REC" value={`${prediction.recommended_units}u`} sublabel="1/4 Kelly" tone="tertiary" />
-      </Card>
-
-      {/* Action Footer: Add to Bet Slip */}
-      <View style={styles.cardFooter}>
-        <Text variant="bodySm" tone="tertiary">
-          Fair Model Odds: <Text variant="dataSm" tone="secondary">{prediction.fair_odds.toFixed(2)}</Text>
-        </Text>
-
-        <Button
-          label={inSlip ? 'In Slip' : 'Add to Slip'}
-          variant={inSlip ? 'primary' : 'ghost'}
-          onPress={toggleSlip}
-          style={inSlip ? undefined : { borderColor: tokens.colors.primary, backgroundColor: tokens.colors.primarySoft }}
-          icon={
-            inSlip ? (
-              <Check size={14} color={tokens.colors.onPrimary} />
-            ) : (
-              <Plus size={14} color={tokens.colors.primary} />
-            )
-          }
+      {/* Model Calculated Probability vs Implied */}
+      <View style={styles.probWrap}>
+        <ProbabilityBar
+          modelProbability={prediction.model_probability}
+          impliedProbability={prediction.implied_probability}
         />
       </View>
 
-      {/* Gated Pro Lock Overlay */}
-      {isLocked && (
-        <View style={[styles.lockOverlay, { backgroundColor: tokens.colors.overlay }]}>
-          <View style={styles.lockCard}>
-            <View
-              style={[
-                styles.lockIconCircle,
-                { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
-              ]}
-            >
-              <Lock size={20} color={tokens.colors.primary} />
+      {/* Quantitative Breakdown: Fair Odds vs Best Odds & Kelly */}
+      <Card elevation="inset" style={styles.metricsGrid}>
+        <MetricTile
+          label="MODEL EDGE"
+          value={`+${prediction.ev_percentage.toFixed(1)}%`}
+          sublabel="True EV"
+          tone="primary"
+        />
+        <MetricTile
+          label="BEST ODDS"
+          value={prediction.sportsbook_odds.toFixed(2)}
+          sublabel={prediction.best_bookmaker}
+        />
+        <MetricTile
+          label="FAIR ODDS"
+          value={prediction.fair_odds.toFixed(2)}
+          sublabel="Vig-stripped"
+          tone="secondary"
+        />
+        <MetricTile
+          label="1/4 KELLY"
+          value={`${prediction.recommended_units}u`}
+          sublabel="Staking"
+          tone="tertiary"
+        />
+      </Card>
+
+      {/* Expandable Matchup Context */}
+      {prediction.analysis_notes ? (
+        <View style={styles.contextContainer}>
+          <TouchableOpacity
+            style={styles.expandToggle}
+            onPress={() => setExpanded(!expanded)}
+            activeOpacity={0.7}
+          >
+            <Text variant="badge" tone="tertiary">
+              {expanded ? 'HIDE MATCHUP METRICS' : 'VIEW MATCHUP METRICS'}
+            </Text>
+            {expanded ? (
+              <ChevronUp size={14} color={tokens.colors.textTertiary} />
+            ) : (
+              <ChevronDown size={14} color={tokens.colors.textTertiary} />
+            )}
+          </TouchableOpacity>
+
+          {expanded ? (
+            <View style={[styles.statsList, { borderColor: tokens.colors.border }]}>
+              {prediction.analysis_notes.l5_avg !== undefined ? (
+                <StatRow
+                  label="L5 Game Average"
+                  value={prediction.analysis_notes.l5_avg}
+                  projection={prediction.model_projected_stat}
+                  delta={prediction.edge_delta}
+                  isPositive={prediction.edge_delta ? prediction.edge_delta > 0 : true}
+                />
+              ) : null}
+              {prediction.analysis_notes.opp_def_rank !== undefined ? (
+                <StatRow
+                  label="Opponent Defensive Rank"
+                  value={`#${prediction.analysis_notes.opp_def_rank} in League`}
+                  sublabel="Matchup Difficulty"
+                />
+              ) : null}
+              {prediction.analysis_notes.game_pace !== undefined ? (
+                <StatRow label="Projected Pace" value={`${prediction.analysis_notes.game_pace} Possessions`} />
+              ) : null}
+              {prediction.analysis_notes.combined_xg !== undefined ? (
+                <StatRow
+                  label="Combined xG Expectancy"
+                  value={`${prediction.analysis_notes.combined_xg} Expected Goals`}
+                  sublabel="Model Attack / Defense Index"
+                />
+              ) : null}
             </View>
-            <Text variant="headlineSm" style={styles.lockTitle}>
-              EdgePoint+ Pro Pick
-            </Text>
-            <Text variant="bodySm" tone="secondary" style={styles.lockDescription}>
-              This high-confidence model prediction is exclusively unlocked for EdgePoint+ subscribers.
-            </Text>
-            <Button label="Unlock with EdgePoint+" variant="primary" onPress={openPaywall} />
-          </View>
+          ) : null}
         </View>
-      )}
+      ) : null}
+
+      {/* Action Footer: Add to Bet Slip */}
+      <View style={[styles.cardFooter, { borderTopColor: tokens.colors.border }]}>
+        <View style={styles.footerNote}>
+          <Text variant="bodySm" tone="tertiary">
+            Baseline:{' '}
+            <Text variant="dataSm" tone="secondary">
+              Pinnacle Fair Line
+            </Text>
+          </Text>
+        </View>
+
+        <Button
+          label={inSlip ? 'In Slip' : '+ Add to Slip'}
+          variant={inSlip ? 'primary' : 'ghost'}
+          icon={inSlip ? <Check size={16} color={tokens.colors.onPrimary} /> : <Plus size={16} color={tokens.colors.textPrimary} />}
+          onPress={toggleSlip}
+          style={styles.actionBtn}
+        />
+      </View>
+
+      {/* Pro Tier Lock Screen (if locked) */}
+      {isLocked ? (
+        <View
+          style={[
+            styles.lockedOverlay,
+            { backgroundColor: tokens.colors.overlay },
+          ]}
+        >
+          <View style={[styles.lockBadge, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.primary }]}>
+            <Lock size={16} color={tokens.colors.primary} />
+            <Text variant="title" tone="brand">
+              Pro Value Pick
+            </Text>
+          </View>
+          <Text variant="bodySm" tone="secondary" style={styles.lockDesc}>
+            Unlock sharp probability models, true fair odds, and 1/4 Kelly sizing.
+          </Text>
+          <Button
+            label="Unlock EdgePoint+ Pro"
+            variant="primary"
+            onPress={openPaywall}
+            style={styles.unlockBtn}
+          />
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -139,80 +208,111 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: 16,
-    marginBottom: 14,
+    marginBottom: 12,
+    padding: 14,
     position: 'relative',
     overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    borderBottomWidth: 1,
+    alignItems: 'center',
     paddingBottom: 8,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
   },
   matchTitleText: {
     flex: 1,
-    marginHorizontal: 8,
   },
   propRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   propDetails: {
     flex: 1,
-    paddingRight: 10,
+    gap: 4,
   },
   selectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 4,
   },
-  marketTypeText: {
+  marketPill: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    overflow: 'hidden',
+  },
+  probWrap: {
+    marginBottom: 10,
   },
   metricsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    padding: 10,
+    marginBottom: 10,
+  },
+  contextContainer: {
+    marginBottom: 10,
+  },
+  expandToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+  },
+  statsList: {
+    borderTopWidth: 1,
+    paddingTop: 6,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
   },
-
-  // Lock Overlay
-  lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  footerNote: {
+    flex: 1,
+  },
+  actionBtn: {
+    minHeight: 44,
+    paddingHorizontal: 16,
+  },
+  lockedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
+    gap: 8,
   },
-  lockCard: {
+  lockBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  lockDesc: {
+    textAlign: 'center',
     maxWidth: 280,
   },
-  lockIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  lockTitle: {
-    marginBottom: 4,
-  },
-  lockDescription: {
-    textAlign: 'center',
-    marginBottom: 14,
+  unlockBtn: {
+    minHeight: 44,
+    marginTop: 4,
   },
 });

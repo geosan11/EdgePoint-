@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Flame, Layers, Lock, Sparkles } from 'lucide-react-native';
 import { CuratedParlay } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
@@ -25,70 +25,58 @@ export function DailySlipCard({ parlay }: DailySlipCardProps) {
   };
 
   return (
-    <Card style={{ marginHorizontal: 16, marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
+    <Card style={styles.card}>
       {/* Top Banner */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: 8 }}>
+      <View style={styles.topBanner}>
+        <View style={styles.titleWrap}>
           <Flame size={16} color={tokens.colors.primary} />
           <Text variant="title" numberOfLines={1} style={{ flex: 1 }}>
             {parlay.title}
           </Text>
         </View>
-        <Badge label={`+${parlay.combined_ev_percentage}% EV`} tone="positive" />
+        <Badge label={`+${parlay.combined_ev_percentage}% EV`} tone="positive" size="sm" />
       </View>
 
       {/* Parlay Stats Bar */}
-      <Card elevation="inset" style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
+      <Card elevation="inset" style={styles.statsBar}>
         <MetricTile label="TOTAL ODDS" value={parlay.total_sportsbook_odds.toFixed(2)} tone="primary" />
         <MetricTile label="FAIR ODDS" value={parlay.total_fair_odds.toFixed(2)} />
         <MetricTile label="WIN PROB" value={`${(parlay.model_win_probability * 100).toFixed(1)}%`} />
         <MetricTile
-          label="CORRELATION"
+          label="SYNERGY"
           value={`+${Math.round((parlay.correlation_score - 1.0) * 100)}%`}
           tone="secondary"
         />
       </Card>
 
       {/* Legs List */}
-      <View style={{ gap: 8, marginBottom: 12 }}>
+      <View style={styles.legsList}>
         {parlay.legs.map((leg, index) => (
           <View
             key={index}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: tokens.colors.surfaceInset,
-              borderRadius: tokens.radius.lg,
-              padding: 10,
-              borderWidth: 1,
-              borderColor: tokens.colors.border,
-            }}
+            style={[
+              styles.legItem,
+              { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
+            ]}
           >
             <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                backgroundColor: tokens.colors.surface,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 10,
-              }}
+              style={[
+                styles.legIndex,
+                { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border },
+              ]}
             >
               <Text variant="dataSm" tone="brand">
                 {index + 1}
               </Text>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, gap: 2 }}>
               <Text variant="bodySm" tone="secondary">
                 {leg.fixture}
               </Text>
-              <Text variant="title" style={{ marginTop: 1 }}>
-                {leg.prop}
-              </Text>
+              <Text variant="title">{leg.prop}</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text variant="dataMd" tone="info">
+            <View style={{ alignItems: 'flex-end', gap: 2 }}>
+              <Text variant="dataMd" tone="brand">
                 {leg.odds.toFixed(2)}
               </Text>
               <Text variant="dataSm" tone="tertiary">
@@ -100,26 +88,19 @@ export function DailySlipCard({ parlay }: DailySlipCardProps) {
       </View>
 
       {/* Analytical Reasoning */}
-      {parlay.summary_analysis && (
+      {parlay.summary_analysis ? (
         <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            backgroundColor: tokens.colors.secondarySoft,
-            borderWidth: 1,
-            borderColor: tokens.colors.secondary,
-            borderRadius: tokens.radius.lg,
-            padding: 9,
-            marginBottom: 14,
-            gap: 6,
-          }}
+          style={[
+            styles.analysisBox,
+            { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
+          ]}
         >
-          <Sparkles size={12} color={tokens.colors.secondary} />
+          <Sparkles size={14} color={tokens.colors.primary} style={{ marginTop: 2 }} />
           <Text variant="bodySm" tone="secondary" style={{ flex: 1 }}>
             {parlay.summary_analysis}
           </Text>
         </View>
-      )}
+      ) : null}
 
       {/* Action CTA */}
       <Button
@@ -131,32 +112,96 @@ export function DailySlipCard({ parlay }: DailySlipCardProps) {
       />
 
       {/* Gated Pro Overlay */}
-      {isLocked && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: tokens.colors.overlay,
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <View style={{ alignItems: 'center', maxWidth: 290 }}>
+      {isLocked ? (
+        <View style={[styles.lockedOverlay, { backgroundColor: tokens.colors.overlay }]}>
+          <View style={styles.lockedContent}>
             <Lock size={24} color={tokens.colors.primary} />
             <Text variant="headlineSm" style={{ marginTop: 8, marginBottom: 4 }}>
               PointBlank Exclusive
             </Text>
-            <Text variant="bodySm" tone="secondary" style={{ textAlign: 'center', marginBottom: 16 }}>
-              Unlock the highest expected value correlated parlay of the day.
+            <Text variant="bodySm" tone="secondary" style={styles.lockedDesc}>
+              Unlock the highest expected value correlated ticket across NBA and Premier League.
             </Text>
             <Button label="Unlock with EdgePoint+" variant="primary" onPress={openPaywall} />
           </View>
         </View>
-      )}
+      ) : null}
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    position: 'relative',
+    overflow: 'hidden',
+    padding: 14,
+  },
+  topBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    marginRight: 8,
+  },
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    marginBottom: 14,
+  },
+  legsList: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  legItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    gap: 10,
+  },
+  legIndex: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  analysisBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 14,
+    gap: 8,
+  },
+  lockedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  lockedContent: {
+    alignItems: 'center',
+    maxWidth: 290,
+  },
+  lockedDesc: {
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+});

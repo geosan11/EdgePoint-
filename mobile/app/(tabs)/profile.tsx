@@ -1,13 +1,26 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, Switch, TextInput, TouchableOpacity, View } from 'react-native';
-import { Apple, CircleDollarSign, Crown, Palette, ShieldCheck, User, Zap } from 'lucide-react-native';
+import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import { CircleDollarSign, Crown, Palette, Settings2, ShieldCheck, User, Zap } from 'lucide-react-native';
+import { Badge, Button, Card, Text } from '../../components/ui';
 import { useBetStore } from '../../stores/useBetStore';
 import { ThemeMode, useTheme } from '../../stores/useThemeStore';
-import { Badge, Button, Card, Text } from '../../components/ui';
 
 export default function ProfileScreen() {
-  const { isPro, toggleProMock, openPaywall, bankroll, setBankroll, unitSize, setUnitSize } =
-    useBetStore();
+  const {
+    isPro,
+    toggleProMock,
+    openPaywall,
+    bankroll,
+    setBankroll,
+    unitSize,
+    setUnitSize,
+    currency,
+    setCurrency,
+    kellyFraction,
+    setKellyFraction,
+    minEdgeScore,
+    setMinEdgeScore,
+  } = useBetStore();
   const { tokens, mode, setMode } = useTheme();
 
   const [bankrollInput, setBankrollInput] = useState(bankroll.toString());
@@ -18,42 +31,43 @@ export default function ProfileScreen() {
     const u = parseFloat(unitInput) || 1000;
     setBankroll(b);
     setUnitSize(u);
-    Alert.alert('Settings Updated', 'Your bankroll parameters have been updated.');
+    Alert.alert('Parameters Saved', 'Your bankroll and Kelly staking model parameters have been updated.');
   };
 
+  const currencySymbol = currency === 'NGN' ? '₦' : '$';
+
   const modeOptions: { label: string; value: ThemeMode }[] = [
-    { label: 'Light', value: 'light' },
     { label: 'Dark', value: 'dark' },
+    { label: 'Light', value: 'light' },
     { label: 'System', value: 'system' },
+  ];
+
+  const kellyOptions = [
+    { label: '1/4 Kelly (Conservative)', value: 0.25 },
+    { label: '1/2 Kelly (Balanced)', value: 0.5 },
+    { label: 'Full Kelly (Aggressive)', value: 1.0 },
   ];
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: tokens.colors.background }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 14 }}
+      style={[styles.screen, { backgroundColor: tokens.colors.background }]}
+      contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
       {/* 1. Account Summary Card */}
-      <Card padded={false} style={{ padding: 16, borderRadius: tokens.radius.xxl }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+      <Card style={styles.card}>
+        <View style={styles.userHeader}>
           <View
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 24,
-              backgroundColor: tokens.colors.primarySoft,
-              borderWidth: 1.5,
-              borderColor: tokens.colors.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 12,
-            }}
+            style={[
+              styles.avatar,
+              { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+            ]}
           >
-            <User size={26} color={tokens.colors.primary} />
+            <User size={24} color={tokens.colors.primary} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.userInfo}>
             <Text variant="headlineSm">Quantitative Bettor</Text>
-            <Text variant="dataSm" tone="secondary" style={{ marginTop: 2 }}>
+            <Text variant="dataSm" tone="secondary">
               user@edgepointplus.ai
             </Text>
           </View>
@@ -74,58 +88,157 @@ export default function ProfileScreen() {
           />
         ) : (
           <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: tokens.colors.primarySoft,
-              borderWidth: 1,
-              borderColor: tokens.colors.primary,
-              borderRadius: tokens.radius.lg,
-              padding: 10,
-              gap: 8,
-            }}
+            style={[
+              styles.proBanner,
+              { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+            ]}
           >
             <ShieldCheck size={16} color={tokens.colors.primary} />
             <Text variant="title" tone="brand" style={{ fontSize: 12 }}>
-              All +EV Models & Parlays Unlocked
+              All +EV Models, Sharp Steam & Parlays Unlocked
             </Text>
           </View>
         )}
       </Card>
 
-      {/* 2. Appearance */}
-      <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      {/* 2. Bankroll & Kelly Staking Engine */}
+      <Card style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <CircleDollarSign size={18} color={tokens.colors.primary} />
+          <Text variant="headlineSm">Bankroll & Kelly Sizing</Text>
+        </View>
+
+        <View style={styles.inputsRow}>
+          <View style={styles.inputCol}>
+            <Text variant="label" tone="secondary" style={styles.inputLabel}>
+              Total Bankroll ({currencySymbol})
+            </Text>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: tokens.colors.surfaceInset,
+                  borderColor: tokens.colors.border,
+                  color: tokens.colors.textPrimary,
+                },
+              ]}
+              value={bankrollInput}
+              onChangeText={setBankrollInput}
+              keyboardType="numeric"
+              placeholder="100000"
+              placeholderTextColor={tokens.colors.textTertiary}
+            />
+          </View>
+
+          <View style={styles.inputCol}>
+            <Text variant="label" tone="secondary" style={styles.inputLabel}>
+              1 Unit Size ({currencySymbol})
+            </Text>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: tokens.colors.surfaceInset,
+                  borderColor: tokens.colors.border,
+                  color: tokens.colors.textPrimary,
+                },
+              ]}
+              value={unitInput}
+              onChangeText={setUnitInput}
+              keyboardType="numeric"
+              placeholder="1000"
+              placeholderTextColor={tokens.colors.textTertiary}
+            />
+          </View>
+        </View>
+
+        {/* Currency Switch */}
+        <View style={styles.currencyRow}>
+          <Text variant="bodySm" tone="secondary">
+            Primary Currency:
+          </Text>
+          <View style={styles.currencyButtons}>
+            <TouchableOpacity
+              style={[
+                styles.choicePill,
+                currency === 'NGN' && { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                { borderColor: tokens.colors.border },
+              ]}
+              onPress={() => setCurrency('NGN')}
+              activeOpacity={0.7}
+            >
+              <Text variant="badge" tone={currency === 'NGN' ? 'brand' : 'secondary'}>
+                ₦ NGN
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.choicePill,
+                currency === 'USD' && { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                { borderColor: tokens.colors.border },
+              ]}
+              onPress={() => setCurrency('USD')}
+              activeOpacity={0.7}
+            >
+              <Text variant="badge" tone={currency === 'USD' ? 'brand' : 'secondary'}>
+                $ USD
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Kelly Fraction Choice */}
+        <View style={styles.kellyWrap}>
+          <Text variant="label" tone="secondary" style={styles.inputLabel}>
+            Fractional Kelly Model
+          </Text>
+          {kellyOptions.map((k) => (
+            <TouchableOpacity
+              key={k.value}
+              style={[
+                styles.choiceRow,
+                {
+                  backgroundColor: kellyFraction === k.value ? tokens.colors.primarySoft : tokens.colors.surfaceInset,
+                  borderColor: kellyFraction === k.value ? tokens.colors.primary : tokens.colors.border,
+                },
+              ]}
+              onPress={() => setKellyFraction(k.value)}
+              activeOpacity={0.7}
+            >
+              <Text variant="title" tone={kellyFraction === k.value ? 'brand' : 'primary'} style={{ fontSize: 12 }}>
+                {k.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Button label="Save Parameters" variant="ghost" fullWidth onPress={handleUpdateBankroll} style={{ marginTop: 10 }} />
+      </Card>
+
+      {/* 3. Appearance */}
+      <Card style={styles.card}>
+        <View style={styles.sectionHeader}>
           <Palette size={18} color={tokens.colors.primary} />
           <Text variant="headlineSm">Appearance</Text>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: tokens.colors.surfaceInset,
-            borderWidth: 1,
-            borderColor: tokens.colors.border,
-            borderRadius: tokens.radius.xl,
-            padding: 2,
-            gap: 2,
-          }}
-        >
+        <View style={styles.themeChoices}>
           {modeOptions.map((opt) => {
             const active = mode === opt.value;
             return (
               <TouchableOpacity
                 key={opt.value}
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  paddingVertical: 8,
-                  borderRadius: tokens.radius.lg,
-                  backgroundColor: active ? tokens.colors.primary : 'transparent',
-                }}
+                style={[
+                  styles.themeTab,
+                  {
+                    backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surfaceInset,
+                    borderColor: active ? tokens.colors.primary : tokens.colors.border,
+                  },
+                ]}
                 onPress={() => setMode(opt.value)}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
-                <Text variant="title" tone={active ? 'onPrimary' : 'secondary'} style={{ fontSize: 12 }}>
+                <Text variant="title" tone={active ? 'brand' : 'secondary'} style={{ fontSize: 12 }}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -134,117 +247,134 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
-      {/* 3. Bankroll Management */}
-      <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <CircleDollarSign size={18} color={tokens.colors.primary} />
-          <Text variant="headlineSm">Bankroll & Unit Sizing</Text>
+      {/* 4. Model Testing Simulator */}
+      <Card style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Settings2 size={18} color={tokens.colors.secondary} />
+          <Text variant="headlineSm">Developer & Mock Sandbox</Text>
         </View>
-        <Text variant="bodySm" tone="secondary" style={{ marginBottom: 12 }}>
-          Configure your total bankroll and standard 1.0 unit size to calculate fractional Kelly stakes.
-        </Text>
-
-        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+        <View style={styles.switchRow}>
           <View style={{ flex: 1 }}>
-            <Text variant="label" tone="tertiary" style={{ marginBottom: 4 }}>Total Bankroll (₦)</Text>
-            <TextInput
-              style={{
-                backgroundColor: tokens.colors.surfaceInset,
-                borderWidth: 1,
-                borderColor: tokens.colors.border,
-                borderRadius: tokens.radius.lg,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                fontSize: 15,
-                fontFamily: 'JetBrainsMono_700Bold',
-                color: tokens.colors.textPrimary,
-              }}
-              value={bankrollInput}
-              onChangeText={setBankrollInput}
-              keyboardType="numeric"
-            />
+            <Text variant="title">Toggle EdgePoint+ Pro Entitlement</Text>
+            <Text variant="bodySm" tone="secondary">
+              Instantly unlock all NBA, EuroLeague, and Premier League model predictions.
+            </Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="label" tone="tertiary" style={{ marginBottom: 4 }}>1.0 Unit Size (₦)</Text>
-            <TextInput
-              style={{
-                backgroundColor: tokens.colors.surfaceInset,
-                borderWidth: 1,
-                borderColor: tokens.colors.border,
-                borderRadius: tokens.radius.lg,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                fontSize: 15,
-                fontFamily: 'JetBrainsMono_700Bold',
-                color: tokens.colors.textPrimary,
-              }}
-              value={unitInput}
-              onChangeText={setUnitInput}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <Button label="Save Bankroll Settings" variant="secondary" fullWidth onPress={handleUpdateBankroll} />
-      </Card>
-
-      {/* 4. Dev Sandbox Subscription Toggle (dev builds only -- this bypasses the paywall) */}
-      {__DEV__ && (
-        <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Crown size={18} color={tokens.colors.secondary} />
-            <Text variant="headlineSm">Developer Testing Sandbox</Text>
-          </View>
-          <Text variant="bodySm" tone="secondary" style={{ marginBottom: 12 }}>
-            Toggle between Free Teaser and EdgePoint+ Pro to test paywall gating without making real store purchases.
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: tokens.colors.surfaceInset,
-              borderRadius: tokens.radius.xl,
-              padding: 12,
-            }}
-          >
-            <Text variant="title" style={{ fontSize: 13 }}>Simulate Pro Active Entitlement</Text>
-            <Switch
-              value={isPro}
-              onValueChange={toggleProMock}
-              trackColor={{ false: tokens.colors.border, true: tokens.colors.primary }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-        </Card>
-      )}
-
-      {/* 5. Authentication Options */}
-      <Card>
-        <Text variant="headlineSm" style={{ marginBottom: 10 }}>Account & Authentication</Text>
-        <View style={{ gap: 10 }}>
-          <Button
-            label="Continue with Google"
-            variant="ghost"
-            fullWidth
-            onPress={() => Alert.alert('Google Sign-In', 'Native Google Sign-In initiated.')}
-          />
-          <Button
-            label="Sign in with Apple"
-            variant="ghost"
-            fullWidth
-            onPress={() => Alert.alert('Apple Sign-In', 'Native Apple Sign-In initiated.')}
-            icon={<Apple size={16} color="#FFFFFF" />}
-            style={{ backgroundColor: '#000000', borderColor: '#000000' }}
+          <Switch
+            value={isPro}
+            onValueChange={toggleProMock}
+            trackColor={{ false: tokens.colors.borderStrong, true: tokens.colors.primary }}
+            thumbColor={tokens.colors.textPrimary}
           />
         </View>
       </Card>
-
-      {/* Responsible Gambling Footer */}
-      <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', paddingHorizontal: 8 }}>
-        EdgePoint+ provides mathematical and statistical modeling tools for informational purposes.
-        Sports betting involves financial risk. Bet responsibly and within your means. 18+.
-      </Text>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 32,
+    gap: 14,
+  },
+  card: {
+    padding: 14,
+    gap: 10,
+  },
+  userHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  proBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    gap: 8,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  inputsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  inputCol: {
+    flex: 1,
+    gap: 4,
+  },
+  inputLabel: {
+    fontSize: 10,
+  },
+  textInput: {
+    height: 42,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  currencyButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  choicePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  kellyWrap: {
+    gap: 6,
+    marginTop: 4,
+  },
+  choiceRow: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  themeChoices: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  themeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+});

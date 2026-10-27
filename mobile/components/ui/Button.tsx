@@ -49,6 +49,7 @@ export function Button({
           borderWidth: 1,
           borderColor: v.border,
           borderRadius: tokens.radius.lg,
+          minHeight: 44,
           paddingVertical: 12,
           paddingHorizontal: 16,
           opacity: isDisabled ? 0.5 : 1,

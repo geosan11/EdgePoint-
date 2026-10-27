@@ -4,12 +4,55 @@ export type MarketType =
   | 'player_points'
   | 'player_rebounds'
   | 'player_assists'
+  | 'player_threes'
   | 'pra_combo'
   | 'match_total'
   | 'spread'
-  | 'btts';
+  | 'moneyline'
+  | 'btts'
+  | 'shots_on_target';
 
 export type Tier = 'free' | 'pro';
+
+export interface MatchFixture {
+  id: string;
+  sport: Sport;
+  league: 'NBA' | 'Premier League';
+  homeTeam: string;
+  awayTeam: string;
+  homeScore?: number;
+  awayScore?: number;
+  status: 'live' | 'upcoming' | 'finished';
+  gameClock?: string; // e.g. "Q3 4:28" or "68'"
+  commenceTime: string;
+  stadium?: string;
+  markets: {
+    moneyline?: {
+      home: number;
+      away: number;
+      draw?: number;
+      bestBook: string;
+    };
+    spread?: {
+      line: number;
+      homeOdds: number;
+      awayOdds: number;
+      bestBook: string;
+    };
+    total?: {
+      line: number;
+      overOdds: number;
+      underOdds: number;
+      bestBook: string;
+    };
+  };
+  modelEdge?: {
+    market: string;
+    pick: string;
+    edgePct: number;
+    modelProb: number;
+  };
+}
 
 export interface Prediction {
   id: string;
@@ -86,6 +129,33 @@ export interface LineMovement {
   created_at: string;
 }
 
+export interface TrackerBet {
+  id: string;
+  date: string;
+  fixture: string;
+  prop: string;
+  sport: Sport;
+  odds: number;
+  stake: number; // in unit or currency
+  stakeUnits: number;
+  result: 'won' | 'lost' | 'pending';
+  pnl: number;
+  modelEdge: number;
+  closingLineValue?: number; // CLV %
+}
+
+export interface LeagueTrendInsight {
+  id: string;
+  sport: Sport;
+  league: 'NBA' | 'Premier League';
+  title: string;
+  subtitle: string;
+  stat: string;
+  statLabel: string;
+  trend: 'positive' | 'negative' | 'neutral';
+  description: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -95,4 +165,5 @@ export interface UserProfile {
   currentPeriodEnd?: string;
   bankroll: number;
   unitSize: number;
+  currency: 'USD' | 'NGN';
 }
