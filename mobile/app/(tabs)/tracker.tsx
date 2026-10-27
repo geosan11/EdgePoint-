@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { Bookmark, Calculator, Check, CheckCircle2, Flame, Layers, Trash2, TrendingUp, X } from 'lucide-react-native';
+import { Bookmark, Calculator, Check, CheckCircle2, Flame, Layers, Percent, Trash2, TrendingUp, X, Zap } from 'lucide-react-native';
 import { DailySlipCard } from '../../components/DailySlipCard';
 import { Badge, Button, Card, MetricTile, Text } from '../../components/ui';
 import { getDailySlip } from '../../lib/supabase';
@@ -9,6 +9,7 @@ import { useBetStore } from '../../stores/useBetStore';
 import { useTheme } from '../../stores/useThemeStore';
 
 type TrackerTab = 'slip' | 'ledger' | 'anchor';
+type BetResultFilter = 'all' | 'pending' | 'won' | 'lost';
 
 export default function TrackerScreen() {
   const {
@@ -16,6 +17,7 @@ export default function TrackerScreen() {
     removeLegFromSlip,
     clearSlip,
     getSlipMetrics,
+    getAvgClv,
     unitSize,
     bankroll,
     currency,
@@ -29,31 +31,53 @@ export default function TrackerScreen() {
   const [activeTab, setActiveTab] = useState<TrackerTab>('slip');
   const [dailySlip, setDailySlip] = useState<CuratedParlay | null>(null);
   const [stakeUnits, setStakeUnits] = useState('1.0');
+  const [betFilter, setBetFilter] = useState<BetResultFilter>('all');
 
   useEffect(() => {
     getDailySlip().then(setDailySlip);
   }, []);
 
   const metrics = getSlipMetrics();
-  const numericStake = parseFloat(stakeUnits) || 1.0;
+
+  // Smooth numeric stake parsing without jumping on "0."
+  const parsedStake = parseFloat(stakeUnits);
+  const numericStake = isNaN(parsedStake) || parsedStake < 0 ? 0 : parsedStake;
   const stakeCash = numericStake * unitSize;
   const potentialPayout = Math.round(stakeCash * metrics.totalOdds);
 
   const currencySymbol = currency === 'NGN' ? '₦' : '$';
 
-  // Bankroll stats
+  // Bankroll stats & CLV
   const settledBets = trackerBets.filter((b) => b.result !== 'pending');
   const wonBets = settledBets.filter((b) => b.result === 'won');
   const winRate = settledBets.length > 0 ? (wonBets.length / settledBets.length) * 100 : 0;
   const totalPnl = settledBets.reduce((acc, b) => acc + b.pnl, 0);
   const totalStaked = settledBets.reduce((acc, b) => acc + b.stake, 0);
   const roiPct = totalStaked > 0 ? (totalPnl / totalStaked) * 100 : 0;
+  const avgClv = getAvgClv();
+
+  const filteredBets = trackerBets.filter((b) => {
+    if (betFilter === 'all') return true;
+    return b.result === betFilter;
+  });
 
   const handleSaveToTracker = () => {
     if (slipLegs.length === 0) return;
+    if (numericStake <= 0) {
+      Alert.alert('Invalid Stake', 'Please enter a positive stake amount.');
+      return;
+    }
     saveSlipToTracker(numericStake);
     Alert.alert('Slip Logged', `Logged ${slipLegs.length}-leg ticket to your bankroll tracker.`);
     setActiveTab('ledger');
+  };
+
+  const applyKellyStake = () => {
+    if (metrics.recommendedUnits > 0) {
+      setStakeUnits(metrics.recommendedUnits.toString());
+    } else {
+      setStakeUnits('0.5');
+    }
   };
 
   return (
@@ -122,7 +146,7 @@ export default function TrackerScreen() {
             <View style={styles.legsList}>
               {slipLegs.map((leg, index) => (
                 <View
-                  key={index}
+                  key={leg.prediction_id || index}
                   style={[
                     styles.legItem,
                     { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
@@ -146,7 +170,13 @@ export default function TrackerScreen() {
                     </Text>
                     <TouchableOpacity
                       style={styles.removeBtn}
-                      onPress={() => leg.prediction_id && removeLegFromSlip(leg.prediction_id)}
+                      onPress={() => {
+                        if (leg.prediction_id) {
+                          removeLegFromSlip(leg.prediction_id);
+                        } else {
+                          clearSlip();
+                        }
+                      }}
                       activeOpacity={0.7}
                     >
                       <X size={16} color={tokens.colors.negative} />
@@ -182,13 +212,54 @@ export default function TrackerScreen() {
               </View>
               <View style={styles.metricRow}>
                 <Text variant="bodySm" tone="secondary">
-                  1/4 Kelly Sizing
+                  1/4 Kelly Recommendation
                 </Text>
                 <Text variant="dataSm" tone="warning">
                   {metrics.recommendedUnits} Units
                 </Text>
               </View>
             </Card>
+
+            {/* Quick Staking Presets */}
+            <View style={styles.presetsWrap}>
+              <Text variant="label" tone="tertiary">
+                QUICK STAKE:
+              </Text>
+              <View style={styles.presetButtons}>
+                {['0.5', '1.0', '2.0'].map((preset) => (
+                  <TouchableOpacity
+                    key={preset}
+                    style={[
+                      styles.presetChip,
+                      stakeUnits === preset && { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                      { borderColor: tokens.colors.border },
+                    ]}
+                    onPress={() => setStakeUnits(preset)}
+                    activeOpacity={0.7}
+                  >
+                    <Text variant="badge" tone={stakeUnits === preset ? 'brand' : 'secondary'}>
+                      {preset}u
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+
+                {metrics.recommendedUnits > 0 ? (
+                  <TouchableOpacity
+                    style={[
+                      styles.presetChip,
+                      { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                    ]}
+                    onPress={applyKellyStake}
+                    activeOpacity={0.7}
+                  >
+                    <Zap size={11} color={tokens.colors.primary} />
+                    <Text variant="badge" tone="brand">
+                      Kelly ({metrics.recommendedUnits}u)
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
 
             {/* Staking & Payout Calculator */}
             <View style={styles.stakeGrid}>
@@ -268,25 +339,52 @@ export default function TrackerScreen() {
               sublabel={`${wonBets.length}/${settledBets.length} Won`}
               tone="primary"
             />
+            <MetricTile
+              label="AVG CLV"
+              value={`+${avgClv}%`}
+              sublabel="Beat Close"
+              tone="secondary"
+            />
           </Card>
 
-          {/* Settled & Active Bets */}
-          <Text variant="headlineSm" style={styles.sectionTitle}>
-            Active & Logged Bets ({trackerBets.length})
-          </Text>
+          {/* Ledger Filter Chips */}
+          <View style={styles.filterRow}>
+            <Text variant="headlineSm" style={styles.sectionTitle}>
+              Logged Bets ({filteredBets.length})
+            </Text>
 
-          {trackerBets.length === 0 ? (
+            <View style={styles.filterPills}>
+              {(['all', 'pending', 'won', 'lost'] as BetResultFilter[]).map((f) => (
+                <TouchableOpacity
+                  key={f}
+                  style={[
+                    styles.filterChip,
+                    betFilter === f && { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                    { borderColor: tokens.colors.border },
+                  ]}
+                  onPress={() => setBetFilter(f)}
+                  activeOpacity={0.7}
+                >
+                  <Text variant="badge" tone={betFilter === f ? 'brand' : 'secondary'}>
+                    {f.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {filteredBets.length === 0 ? (
             <Card style={styles.emptyCard}>
               <TrendingUp size={32} color={tokens.colors.borderStrong} />
               <Text variant="title" tone="secondary" style={styles.emptyTitle}>
-                No Bets Recorded
+                No Bets in Filter
               </Text>
               <Text variant="bodySm" tone="tertiary" style={styles.emptyDesc}>
                 Log your custom tickets or individual value picks from the Betslip to track your edge over time.
               </Text>
             </Card>
           ) : (
-            trackerBets.map((bet) => (
+            filteredBets.map((bet) => (
               <Card key={bet.id} style={styles.betCard}>
                 <View style={styles.betHeader}>
                   <View style={styles.betLeft}>
@@ -349,9 +447,16 @@ export default function TrackerScreen() {
                 ) : null}
 
                 <View style={[styles.betFooter, { borderTopColor: tokens.colors.border }]}>
-                  <Text variant="dataSm" tone="tertiary">
-                    Stake: {bet.stakeUnits}u ({currencySymbol}{bet.stake.toLocaleString()})
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text variant="dataSm" tone="tertiary">
+                      Stake: {bet.stakeUnits}u ({currencySymbol}{bet.stake.toLocaleString()})
+                    </Text>
+                    {bet.closingLineValue !== undefined ? (
+                      <Text variant="badge" tone="brand">
+                        +{bet.closingLineValue}% CLV
+                      </Text>
+                    ) : null}
+                  </View>
                   <Text
                     variant="dataSm"
                     tone={bet.pnl > 0 ? 'brand' : bet.pnl < 0 ? 'negative' : 'secondary'}
@@ -389,6 +494,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingVertical: 12,
+    paddingBottom: 96,
   },
   subNavBar: {
     flexDirection: 'row',
@@ -448,12 +554,31 @@ const styles = StyleSheet.create({
   metricsSummary: {
     padding: 12,
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   metricRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  presetsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  presetButtons: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  presetChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   stakeGrid: {
     flexDirection: 'row',
@@ -486,9 +611,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 12,
   },
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   sectionTitle: {
-    marginTop: 6,
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  filterPills: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  filterChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
   },
   betCard: {
     padding: 12,

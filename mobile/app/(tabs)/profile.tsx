@@ -26,6 +26,14 @@ export default function ProfileScreen() {
   const [bankrollInput, setBankrollInput] = useState(bankroll.toString());
   const [unitInput, setUnitInput] = useState(unitSize.toString());
 
+  React.useEffect(() => {
+    setBankrollInput(bankroll.toString());
+  }, [bankroll]);
+
+  React.useEffect(() => {
+    setUnitInput(unitSize.toString());
+  }, [unitSize]);
+
   const handleUpdateBankroll = () => {
     const b = parseFloat(bankrollInput);
     const u = parseFloat(unitInput);
@@ -290,7 +298,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 96,
     gap: 14,
   },
   card: {

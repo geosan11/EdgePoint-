@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ArrowDownRight, ArrowUpRight, Zap } from 'lucide-react-native';
+import { ArrowDownRight, ArrowUpRight, Check, Plus, Zap } from 'lucide-react-native';
 import { LineMovement } from '../lib/types';
+import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
-import { Badge, BadgeTone, Card, MetricTile, Text } from './ui';
+import { Badge, BadgeTone, Button, Card, MetricTile, Text } from './ui';
 
 interface SteamCardProps {
   movement: LineMovement;
@@ -11,6 +12,7 @@ interface SteamCardProps {
 
 export function SteamCard({ movement }: SteamCardProps) {
   const { tokens } = useTheme();
+  const { toggleCustomLeg, isLegInSlip } = useBetStore();
   const isShortening = movement.steam_direction === 'shortening';
 
   let alertBadgeText = 'SHARP STEAM';
@@ -30,6 +32,21 @@ export function SteamCard({ movement }: SteamCardProps) {
       : tone === 'info'
         ? tokens.colors.secondary
         : tokens.colors.warning;
+
+  const legId = `steam_${movement.id}`;
+  const inSlip = isLegInSlip(legId);
+
+  const handleToggleSteamLeg = () => {
+    toggleCustomLeg({
+      prediction_id: legId,
+      fixture: movement.match_title,
+      prop: `${movement.selection} (${movement.divergent_book} Lag)`,
+      selection: movement.selection,
+      odds: movement.opening_odds, // lagging retail line before drop
+      ev: `+${movement.divergence_percentage}% Steam Edge`,
+      bookmaker: movement.divergent_book,
+    });
+  };
 
   return (
     <Card style={styles.card}>
@@ -79,6 +96,26 @@ export function SteamCard({ movement }: SteamCardProps) {
           align="flex-end"
         />
       </Card>
+
+      {/* Action Footer: Bet the lagging bookmaker before adjustment */}
+      <View style={[styles.cardFooter, { borderTopColor: tokens.colors.border }]}>
+        <View style={styles.footerInfo}>
+          <Text variant="bodySm" tone="tertiary">
+            Lagging on <Text variant="dataSm" tone="brand">{movement.divergent_book}</Text>
+          </Text>
+          <Text variant="dataSm" tone="secondary">
+            Take @ {movement.opening_odds.toFixed(2)} before drop
+          </Text>
+        </View>
+
+        <Button
+          label={inSlip ? 'In Slip' : '+ Add Steam Line'}
+          variant={inSlip ? 'primary' : 'ghost'}
+          icon={inSlip ? <Check size={14} color={tokens.colors.onPrimary} /> : <Plus size={14} color={tokens.colors.textPrimary} />}
+          onPress={handleToggleSteamLeg}
+          style={styles.actionBtn}
+        />
+      </View>
     </Card>
   );
 }
@@ -104,6 +141,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
+    marginBottom: 4,
   },
   shiftCol: {
     gap: 4,
@@ -115,5 +153,22 @@ const styles = StyleSheet.create({
   },
   struckLine: {
     textDecorationLine: 'line-through',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    marginTop: 4,
+  },
+  footerInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  actionBtn: {
+    minHeight: 40,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
 });

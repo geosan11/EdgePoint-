@@ -70,6 +70,46 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         <EdgeScoreBadge score={prediction.edge_score} size="md" />
       </View>
 
+      {/* Contextual Intelligence Pills (NBA Pace, EPL xG, Def Rank) */}
+      {(prediction.analysis_notes?.game_pace !== undefined ||
+        prediction.analysis_notes?.combined_xg !== undefined ||
+        prediction.analysis_notes?.opp_def_rank !== undefined) && (
+        <View style={styles.contextPillsRow}>
+          {prediction.analysis_notes?.game_pace !== undefined && (
+            <View style={[styles.contextChip, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+              <Text variant="dataSm" tone={prediction.analysis_notes.game_pace >= 101 ? 'brand' : 'tertiary'}>
+                ⚡ {prediction.analysis_notes.game_pace} Pace
+              </Text>
+              <Text variant="label" tone="secondary">
+                {prediction.analysis_notes.game_pace >= 101 ? 'High Pace' : 'Controlled'}
+              </Text>
+            </View>
+          )}
+
+          {prediction.analysis_notes?.combined_xg !== undefined && (
+            <View style={[styles.contextChip, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+              <Text variant="dataSm" tone="brand">
+                ⚽ {prediction.analysis_notes.combined_xg} xG
+              </Text>
+              <Text variant="label" tone="secondary">
+                Match Expectancy
+              </Text>
+            </View>
+          )}
+
+          {prediction.analysis_notes?.opp_def_rank !== undefined && (
+            <View style={[styles.contextChip, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+              <Text
+                variant="dataSm"
+                tone={prediction.analysis_notes.opp_def_rank >= 20 ? 'brand' : 'secondary'}
+              >
+                🛡️ #{prediction.analysis_notes.opp_def_rank} Def Rank
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Model Calculated Probability vs Implied */}
       <View style={styles.probWrap}>
         <ProbabilityBar
@@ -142,14 +182,40 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
                 />
               ) : null}
               {prediction.analysis_notes.game_pace !== undefined ? (
-                <StatRow label="Projected Pace" value={`${prediction.analysis_notes.game_pace} Possessions`} />
+                <View style={styles.expandedMetricBlock}>
+                  <StatRow label="Projected Pace" value={`${prediction.analysis_notes.game_pace} Possessions`} />
+                  <View style={[styles.meterTrack, { backgroundColor: tokens.colors.surfaceInset }]}>
+                    <View
+                      style={[
+                        styles.meterFill,
+                        {
+                          width: `${Math.min(100, Math.max(10, ((prediction.analysis_notes.game_pace - 95) / 15) * 100))}%`,
+                          backgroundColor: tokens.colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
               ) : null}
               {prediction.analysis_notes.combined_xg !== undefined ? (
-                <StatRow
-                  label="Combined xG Expectancy"
-                  value={`${prediction.analysis_notes.combined_xg} Expected Goals`}
-                  sublabel="Model Attack / Defense Index"
-                />
+                <View style={styles.expandedMetricBlock}>
+                  <StatRow
+                    label="Combined xG Expectancy"
+                    value={`${prediction.analysis_notes.combined_xg} Expected Goals`}
+                    sublabel={`Home: ${prediction.analysis_notes.home_xg ?? '—'} | Away: ${prediction.analysis_notes.away_xg ?? '—'}`}
+                  />
+                  <View style={[styles.meterTrack, { backgroundColor: tokens.colors.surfaceInset }]}>
+                    <View
+                      style={[
+                        styles.meterFill,
+                        {
+                          width: `${Math.min(100, Math.max(10, (prediction.analysis_notes.combined_xg / 5.0) * 100))}%`,
+                          backgroundColor: tokens.colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
               ) : null}
             </View>
           ) : null}
@@ -261,6 +327,36 @@ const styles = StyleSheet.create({
   },
   contextContainer: {
     marginBottom: 10,
+  },
+  contextPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  contextChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  expandedMetricBlock: {
+    paddingVertical: 4,
+    gap: 4,
+  },
+  meterTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    width: '100%',
+    marginTop: 2,
+  },
+  meterFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   expandToggle: {
     flexDirection: 'row',

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ArrowUpRight, BarChart3, Info, Radio, Zap } from 'lucide-react-native';
+import { ArrowUpRight, BarChart3, Calculator, Info, Radio, Zap } from 'lucide-react-native';
+import { DevigCalculator } from '../../components/DevigCalculator';
 import { SteamCard } from '../../components/SteamCard';
 import { Badge, Card, MetricTile, Text } from '../../components/ui';
 import { getInsights, getLineMovements } from '../../lib/supabase';
 import { LeagueTrendInsight, LineMovement, Sport } from '../../lib/types';
 import { useTheme } from '../../stores/useThemeStore';
 
-type InsightView = 'all' | 'nba' | 'epl' | 'steam';
+type InsightView = 'all' | 'nba' | 'epl' | 'steam' | 'devig';
 
 export default function InsightsScreen() {
   const { tokens } = useTheme();
@@ -44,6 +45,7 @@ export default function InsightsScreen() {
     { label: 'NBA Analytics 🏀', value: 'nba' },
     { label: 'EPL Analytics ⚽', value: 'epl' },
     { label: 'Sharp Steam Radar ⚡', value: 'steam' },
+    { label: 'Devig Calculator 🧮', value: 'devig' },
   ];
 
   return (
@@ -79,8 +81,12 @@ export default function InsightsScreen() {
         </ScrollView>
       </View>
 
-      {/* Main View: Steam Radar OR League Trends */}
-      {activeView === 'steam' ? (
+      {/* Main View: Devig Calculator OR Steam Radar OR League Trends */}
+      {activeView === 'devig' ? (
+        <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
+          <DevigCalculator />
+        </ScrollView>
+      ) : activeView === 'steam' ? (
         <FlatList
           data={movements}
           keyExtractor={(item) => item.id}
@@ -258,7 +264,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   listPadding: {
-    paddingBottom: 24,
+    paddingBottom: 96,
+  },
+  scrollPadding: {
+    paddingTop: 10,
+    paddingBottom: 96,
   },
   emptyContainer: {
     padding: 32,

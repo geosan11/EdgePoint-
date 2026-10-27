@@ -1,5 +1,6 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ChevronDown, ChevronUp, Layers } from 'lucide-react-native';
 import { MatchFixture } from '../../lib/types';
 import { useBetStore } from '../../stores/useBetStore';
 import { useTheme } from '../../stores/useThemeStore';
@@ -16,6 +17,7 @@ interface MatchCardProps {
 export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
   const { tokens } = useTheme();
   const { toggleCustomLeg, isLegInSlip } = useBetStore();
+  const [showMatrix, setShowMatrix] = useState(false);
 
   const isLive = match.status === 'live';
   const leagueTone = match.league === 'NBA' ? 'positive' : 'info';
@@ -50,6 +52,14 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
       });
     }
   };
+
+  // Multi-book comparison lines
+  const booksComparison = [
+    { name: 'Pinnacle (Sharp)', spread: 1.91, total: 1.90, ml: 1.62, isSharp: true },
+    { name: 'Bet365', spread: 1.93, total: 1.91, ml: 1.67 },
+    { name: 'SportyBet', spread: 1.95, total: 1.92, ml: 1.68 },
+    { name: 'DraftKings', spread: 1.90, total: 1.93, ml: 1.65 },
+  ];
 
   return (
     <Card style={styles.card}>
@@ -182,6 +192,61 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
           </View>
         ) : null}
       </View>
+
+      {/* Multi-Bookmaker Comparison Toggle */}
+      <TouchableOpacity
+        style={styles.matrixToggle}
+        onPress={() => setShowMatrix(!showMatrix)}
+        activeOpacity={0.7}
+      >
+        <Text variant="badge" tone="tertiary">
+          {showMatrix ? 'HIDE SPORTSBOOK MATRIX' : 'COMPARE ALL SPORTSBOOK LINES'}
+        </Text>
+        {showMatrix ? (
+          <ChevronUp size={13} color={tokens.colors.textTertiary} />
+        ) : (
+          <ChevronDown size={13} color={tokens.colors.textTertiary} />
+        )}
+      </TouchableOpacity>
+
+      {/* Expandable Multi-Bookmaker Matrix */}
+      {showMatrix ? (
+        <View style={[styles.matrixTable, { borderTopColor: tokens.colors.border }]}>
+          <View style={styles.matrixHeaderRow}>
+            <Text variant="label" tone="tertiary" style={{ flex: 1.5 }}>
+              SPORTSBOOK
+            </Text>
+            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'center' }}>
+              SPREAD
+            </Text>
+            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'center' }}>
+              TOTAL
+            </Text>
+            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'right' }}>
+              ML
+            </Text>
+          </View>
+
+          {booksComparison.map((b) => (
+            <View key={b.name} style={[styles.matrixRow, { borderBottomColor: tokens.colors.border }]}>
+              <View style={{ flex: 1.5 }}>
+                <Text variant="bodySm" tone={b.isSharp ? 'brand' : 'primary'}>
+                  {b.name}
+                </Text>
+              </View>
+              <Text variant="dataSm" tone={b.spread === 1.95 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'center' }}>
+                {b.spread.toFixed(2)}
+              </Text>
+              <Text variant="dataSm" tone={b.total === 1.93 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'center' }}>
+                {b.total.toFixed(2)}
+              </Text>
+              <Text variant="dataSm" tone={b.ml === 1.68 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'right' }}>
+                {b.ml.toFixed(2)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -239,5 +304,29 @@ const styles = StyleSheet.create({
   },
   oddsCol: {
     flex: 1,
+  },
+  matrixToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingTop: 8,
+    marginTop: 6,
+  },
+  matrixTable: {
+    borderTopWidth: 1,
+    marginTop: 8,
+    paddingTop: 6,
+    gap: 4,
+  },
+  matrixHeaderRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+  },
+  matrixRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
   },
 });
