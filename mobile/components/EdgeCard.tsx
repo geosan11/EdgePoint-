@@ -169,23 +169,10 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
           </Text>
         </View>
 
-        <View style={[styles.stripDivider, { backgroundColor: tokens.colors.border }]} />
-
-        <View style={styles.arbitrageCol}>
-          <Text variant="label" tone="tertiary">
-            1/4 KELLY
-          </Text>
-          <Text variant="dataLg" tone="warning">
-            {prediction.recommended_units}u
-          </Text>
-          <Text variant="label" tone="secondary">
-            Optimal Stake
-          </Text>
-        </View>
       </View>
 
       {/* 6. Expandable Matchup Context */}
-      {prediction.analysis_notes ? (
+      {(
         <View style={styles.contextContainer}>
           <TouchableOpacity
             style={styles.expandToggle}
@@ -193,7 +180,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
             activeOpacity={0.7}
           >
             <Text variant="badge" tone="tertiary">
-              {expanded ? 'HIDE MATCHUP METRICS' : 'VIEW MATCHUP METRICS'}
+              {expanded ? 'HIDE THE MATH' : 'SHOW THE MATH'}
             </Text>
             {expanded ? (
               <ChevronUp size={13} color={tokens.colors.textTertiary} />
@@ -204,7 +191,17 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
 
           {expanded ? (
             <View style={[styles.statsList, { borderColor: tokens.colors.border }]}>
-              {prediction.analysis_notes.l5_avg !== undefined ? (
+              <StatRow
+                label="Fair odds vs book"
+                value={`${prediction.fair_odds.toFixed(2)} vs ${prediction.sportsbook_odds.toFixed(2)}`}
+                sublabel={`Model ${(prediction.model_probability * 100).toFixed(1)}% · Book ${(prediction.implied_probability * 100).toFixed(1)}%`}
+              />
+              <StatRow
+                label="Suggested size (¼ Kelly)"
+                value={`${prediction.recommended_units}u`}
+                sublabel="Pro figure: share of bankroll the model's edge supports"
+              />
+              {prediction.analysis_notes?.l5_avg !== undefined ? (
                 <StatRow
                   label="L5 Game Average"
                   value={prediction.analysis_notes.l5_avg}
@@ -213,14 +210,14 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
                   isPositive={prediction.edge_delta ? prediction.edge_delta > 0 : true}
                 />
               ) : null}
-              {prediction.analysis_notes.opp_def_rank !== undefined ? (
+              {prediction.analysis_notes?.opp_def_rank !== undefined ? (
                 <StatRow
                   label="Opponent Defensive Rank"
                   value={`#${prediction.analysis_notes.opp_def_rank} in League`}
                   sublabel="Matchup Difficulty"
                 />
               ) : null}
-              {prediction.analysis_notes.game_pace !== undefined ? (
+              {prediction.analysis_notes?.game_pace !== undefined ? (
                 <View style={styles.expandedMetricBlock}>
                   <StatRow label="Projected Pace" value={`${prediction.analysis_notes.game_pace} Possessions`} />
                   <View style={[styles.meterTrack, { backgroundColor: tokens.colors.surfaceInset }]}>
@@ -236,7 +233,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
                   </View>
                 </View>
               ) : null}
-              {prediction.analysis_notes.combined_xg !== undefined ? (
+              {prediction.analysis_notes?.combined_xg !== undefined ? (
                 <View style={styles.expandedMetricBlock}>
                   <StatRow
                     label="Combined xG Expectancy"
@@ -259,9 +256,9 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
             </View>
           ) : null}
         </View>
-      ) : null}
+      )}
 
-      {/* 7. Action Footer: Deep Analytics & Add to Bet Slip */}
+      {/* 7. Action Footer: Deep Analytics & Watchlist */}
       <View style={[styles.cardFooter, { borderTopColor: tokens.colors.border }]}>
         <TouchableOpacity
           style={[styles.analyticsTriggerBtn, { borderColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}
@@ -275,13 +272,17 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         </TouchableOpacity>
 
         <Button
-          label={inSlip ? 'In Betslip ✓' : '+ Add to Slip'}
+          label={inSlip ? 'On Watchlist ✓' : '+ Watchlist'}
           variant={inSlip ? 'primary' : 'primary'}
           icon={inSlip ? <Check size={16} color={tokens.colors.onPrimary} /> : <Plus size={16} color={tokens.colors.onPrimary} />}
           onPress={toggleSlip}
           style={styles.actionBtn}
         />
       </View>
+
+      <Text variant="label" tone="tertiary" style={styles.disclaimer}>
+        Model analysis, not a guarantee. Edges can lose.
+      </Text>
 
       {/* Deep Analytics Modal */}
       <DeepAnalyticsModal
@@ -320,6 +321,10 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
 }
 
 const styles = StyleSheet.create({
+  disclaimer: {
+    textAlign: 'center',
+    marginTop: 8,
+  },
   cardContainer: {
     marginHorizontal: 16,
     marginBottom: 12,

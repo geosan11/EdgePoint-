@@ -45,7 +45,7 @@ export function Header() {
         </View>
       </View>
 
-      {/* Right Controls: Currency, Theme, Pro Status, Betslip */}
+      {/* Right Controls: Currency, Theme, Pro Status, Watchlist */}
       <View style={styles.rightControls}>
         <TouchableOpacity
           style={[styles.smallButton, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}
@@ -77,7 +77,7 @@ export function Header() {
           )}
         </TouchableOpacity>
 
-        {/* Betslip quick-launcher with count bubble */}
+        {/* Watchlist quick-launcher with count bubble */}
         <TouchableOpacity
           style={[
             styles.iconButton,

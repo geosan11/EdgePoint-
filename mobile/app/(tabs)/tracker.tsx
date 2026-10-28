@@ -68,7 +68,7 @@ export default function TrackerScreen() {
       return;
     }
     saveSlipToTracker(numericStake);
-    Alert.alert('Slip Logged', `Logged ${slipLegs.length}-leg ticket to your bankroll tracker.`);
+    Alert.alert('Logged', `Logged ${slipLegs.length} pick${slipLegs.length === 1 ? '' : 's'} from your watchlist to your tracker.`);
     setActiveTab('ledger');
   };
 
@@ -101,7 +101,7 @@ export default function TrackerScreen() {
             tone={activeTab === 'slip' ? 'brand' : 'secondary'}
             style={{ fontWeight: activeTab === 'slip' ? '800' : '600', letterSpacing: 0.6 }}
           >
-            BETSLIP ({slipLegs.length})
+            WATCHLIST ({slipLegs.length})
           </Text>
         </TouchableOpacity>
 
@@ -140,16 +140,16 @@ export default function TrackerScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 1. BETSLIP BUILDER VIEW */}
+      {/* 1. WATCHLIST VIEW */}
       {activeTab === 'slip' ? (
         slipLegs.length === 0 ? (
           <Card style={styles.emptyCard}>
             <Layers size={36} color={tokens.colors.borderStrong} />
             <Text variant="title" tone="secondary" style={styles.emptyTitle}>
-              Your Betslip is Empty
+              Your Watchlist is Empty
             </Text>
             <Text variant="bodySm" tone="tertiary" style={styles.emptyDesc}>
-              Tap the odds button on any Fixture or "+ Add to Slip" on Edges to build a synergistic ticket.
+              Tap the odds on any fixture or "+ Watchlist" on an edge to follow it here.
             </Text>
           </Card>
         ) : (
@@ -392,7 +392,7 @@ export default function TrackerScreen() {
                 No Bets in Filter
               </Text>
               <Text variant="bodySm" tone="tertiary" style={styles.emptyDesc}>
-                Log your custom tickets or individual value picks from the Betslip to track your edge over time.
+                Log your custom tickets or individual value picks from your Watchlist to track your edge over time.
               </Text>
             </Card>
           ) : (
