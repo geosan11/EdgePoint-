@@ -81,7 +81,7 @@ export function DeepAnalyticsModal({ visible, onClose, prediction }: DeepAnalyti
                   <Text variant="label" tone="tertiary">
                     MODEL PROJECTION
                   </Text>
-                  <Text variant="headlineMd" tone="brand">
+                  <Text variant="dataLg" tone="brand">
                     {prediction.model_projected_stat ? prediction.model_projected_stat.toFixed(1) : (lineValue + analytics.projectionCushion).toFixed(1)}
                   </Text>
                   <Text variant="dataSm" tone="secondary">
@@ -95,7 +95,7 @@ export function DeepAnalyticsModal({ visible, onClose, prediction }: DeepAnalyti
                   <Text variant="label" tone="tertiary">
                     SAFETY CUSHION
                   </Text>
-                  <Text variant="headlineMd" tone="brand">
+                  <Text variant="dataLg" tone="brand">
                     +{analytics.projectionCushion.toFixed(1)}
                   </Text>
                   <Text variant="dataSm" tone="secondary">
@@ -109,7 +109,7 @@ export function DeepAnalyticsModal({ visible, onClose, prediction }: DeepAnalyti
                   <Text variant="label" tone="tertiary">
                     CALCULATED WIN %
                   </Text>
-                  <Text variant="headlineMd" tone="brand">
+                  <Text variant="dataLg" tone="brand">
                     {(prediction.model_probability * 100).toFixed(1)}%
                   </Text>
                   <Text variant="dataSm" tone="tertiary">

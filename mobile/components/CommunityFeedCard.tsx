@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Plus,
   ShieldCheck,
+  Sparkles,
   TrendingDown,
   TrendingUp,
   X,
@@ -53,7 +54,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
       prop: `${post.predictionData.prop} (${post.predictionData.selection} ${post.predictionData.line ?? ''})`,
       selection: post.predictionData.selection,
       odds: post.predictionData.odds,
-      ev: '+EV Tipster',
+      ev: '+EV Syndicate',
       bookmaker: post.predictionData.bookmaker,
     });
     Alert.alert('Pick Added', `Tailed @${post.authorUsername}'s pick to your betslip.`);
@@ -62,7 +63,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
   const handleSubscribe = () => {
     Alert.alert(
       `Subscribe to @${post.authorUsername}`,
-      `Unlock all VIP predictions, closing line alerts, and staking models for ${currencySymbol}${subPrice}?`,
+      `Unlock all VIP syndicate predictions, line alerts, and staking models for ${currencySymbol}${subPrice}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -78,10 +79,10 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
 
   return (
     <Card style={styles.card}>
-      {/* 1. Author Header */}
+      {/* 1. Verified Sharp Header */}
       <View style={styles.authorRow}>
         <View style={styles.authorLeft}>
-          <View style={[styles.avatarBox, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+          <View style={[styles.avatarBox, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.primary }]}>
             <Text style={{ fontSize: 16 }}>
               {post.authorBadge === 'algo_model' ? '⚡' : post.authorUsername.charAt(0)}
             </Text>
@@ -107,7 +108,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
                 tone={post.authorWinRate >= 65 ? 'positive' : 'info'}
                 size="sm"
               />
-              <Text variant="label" tone="secondary">
+              <Text variant="dataSm" tone="brand">
                 +{post.authorRoi}% ROI
               </Text>
               <Text variant="label" tone="tertiary">
@@ -124,28 +125,28 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
         />
       </View>
 
-      {/* 2. Post Title & Text */}
+      {/* 2. Post Title & Analytical Thesis */}
       <View style={styles.contentWrap}>
-        <Text variant="headlineSm" numberOfLines={2}>
+        <Text variant="headlineSm" numberOfLines={2} style={styles.postTitle}>
           {post.title}
         </Text>
-        <Text variant="bodySm" tone="secondary" style={styles.contentText}>
+        <Text variant="body" tone="secondary" style={styles.contentText}>
           {post.content}
         </Text>
       </View>
 
-      {/* 3. Prediction Card Section (Free vs VIP Gated) */}
+      {/* 3. Prediction Ticket Section (Free vs VIP Gated) */}
       {post.type === 'prediction' && post.predictionData ? (
         isLockedVip ? (
-          /* Locked VIP Preview */
+          /* Locked VIP Syndicate Preview */
           <View style={[styles.lockedCard, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.primary }]}>
             <View style={styles.lockedHeader}>
               <View style={[styles.lockIconBox, { backgroundColor: tokens.colors.surface }]}>
-                <Lock size={16} color={tokens.colors.primary} />
+                <Lock size={15} color={tokens.colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="title" tone="brand">
-                  🔒 VIP Subscriber Prediction
+                  🔒 VIP Syndicate Selection
                 </Text>
                 <Text variant="label" tone="secondary">
                   Exclusive to @{post.authorUsername} subscribers
@@ -159,7 +160,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
             </Text>
 
             <Button
-              label={`Subscribe to @${post.authorUsername} (${currencySymbol}${subPrice})`}
+              label={`Unlock @${post.authorUsername} VIP (${currencySymbol}${subPrice})`}
               variant="primary"
               icon={<Crown size={15} color={tokens.colors.onPrimary} />}
               onPress={handleSubscribe}
@@ -168,14 +169,14 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
             />
           </View>
         ) : (
-          /* Unlocked Prediction Ticket */
+          /* Unlocked Syndicate Ticket */
           <View style={[styles.ticketBox, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
             <View style={styles.ticketHeader}>
               <View style={{ flex: 1 }}>
                 <Text variant="label" tone="tertiary">
                   {post.predictionData.fixture} · {post.league}
                 </Text>
-                <Text variant="title" tone="brand" style={styles.ticketPropTitle}>
+                <Text variant="headlineSm" tone="brand" style={styles.ticketPropTitle}>
                   {post.predictionData.prop}: {post.predictionData.selection}{' '}
                   {post.predictionData.line !== undefined ? post.predictionData.line : ''}
                 </Text>
@@ -196,7 +197,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
                 <Text variant="label" tone="tertiary">
                   ODDS
                 </Text>
-                <Text variant="dataMd" tone="brand">
+                <Text variant="dataLg" tone="brand">
                   @{post.predictionData.odds.toFixed(2)}
                 </Text>
               </View>
@@ -222,15 +223,18 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
               <TouchableOpacity
                 style={[
                   styles.tailBtn,
-                  { backgroundColor: inSlip ? tokens.colors.primary : tokens.colors.surface, borderColor: tokens.colors.primary },
+                  {
+                    backgroundColor: inSlip ? tokens.colors.primary : tokens.colors.surface,
+                    borderColor: inSlip ? tokens.colors.primary : tokens.colors.border,
+                  },
                 ]}
                 onPress={handleTailToSlip}
                 activeOpacity={0.7}
               >
                 {inSlip ? (
                   <>
-                    <Check size={13} color={tokens.colors.onPrimary} />
-                    <Text variant="badge" style={{ color: tokens.colors.onPrimary }}>
+                    <Check size={13} color="#000000" />
+                    <Text variant="badge" style={{ color: '#000000' }}>
                       Tailed
                     </Text>
                   </>
@@ -328,9 +332,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -346,7 +350,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   contentWrap: {
-    gap: 6,
+    gap: 4,
+  },
+  postTitle: {
+    letterSpacing: -0.2,
   },
   contentText: {
     lineHeight: 20,
@@ -365,7 +372,7 @@ const styles = StyleSheet.create({
   lockIconBox: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -390,6 +397,7 @@ const styles = StyleSheet.create({
   },
   ticketPropTitle: {
     marginTop: 2,
+    letterSpacing: -0.2,
   },
   ticketDetailsRow: {
     flexDirection: 'row',
@@ -404,11 +412,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 6,
     borderWidth: 1,
-    minHeight: 34,
+    minHeight: 36,
   },
   footer: {
     paddingTop: 10,

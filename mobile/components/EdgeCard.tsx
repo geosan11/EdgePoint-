@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { BarChart2, Check, ChevronDown, ChevronUp, Lock, Plus } from 'lucide-react-native';
+import { BarChart2, Check, ChevronDown, ChevronUp, Lock, Plus, Sparkles, TrendingUp, Zap } from 'lucide-react-native';
 import { Prediction } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
 import { DeepAnalyticsModal } from './DeepAnalyticsModal';
-import { Badge, Button, Card, MetricTile, ProbabilityBar, StatRow, Text } from './ui';
+import { Badge, Button, Card, ProbabilityBar, StatRow, Text } from './ui';
 import { EdgeScoreBadge } from './EdgeScoreBadge';
 
 interface EdgeCardProps {
@@ -30,10 +30,15 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
   };
 
   const leagueTone = prediction.sport === 'basketball' ? 'positive' : 'info';
+  const cushion = prediction.edge_delta !== undefined
+    ? prediction.edge_delta
+    : prediction.model_projected_stat && prediction.line
+      ? prediction.model_projected_stat - prediction.line
+      : null;
 
   return (
     <Card style={styles.cardContainer}>
-      {/* Top Header: League & Match Info */}
+      {/* 1. Top Header: League, Matchup, EdgeScore */}
       <View style={[styles.cardHeader, { borderBottomColor: tokens.colors.border }]}>
         <View style={styles.headerLeft}>
           <Badge
@@ -46,33 +51,44 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
           </Text>
         </View>
 
-        <Text variant="dataSm" tone="tertiary">
-          {prediction.commence_time}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text variant="dataSm" tone="tertiary">
+            {prediction.commence_time}
+          </Text>
+          <EdgeScoreBadge score={prediction.edge_score} size="md" />
+        </View>
       </View>
 
-      {/* Main Prop Line & EdgeScore */}
-      <View style={styles.propRow}>
+      {/* 2. Main Selection Hero Banner */}
+      <View style={styles.propHeroSection}>
         <View style={styles.propDetails}>
-          <Text variant="headlineSm" numberOfLines={1}>
+          <Text variant="headline" numberOfLines={1} style={styles.playerName}>
             {prediction.player_name ? prediction.player_name : prediction.match_title}
           </Text>
+
           <View style={styles.selectionRow}>
-            <Text variant="dataMd" tone="brand">
+            <Text variant="dataLg" tone="brand">
               {prediction.selection} {prediction.line !== undefined ? prediction.line : ''}
             </Text>
-            <View style={[styles.marketPill, { backgroundColor: tokens.colors.surfaceInset }]}>
+            <View style={[styles.marketPill, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
               <Text variant="label" tone="secondary">
                 {prediction.market_type.replace('_', ' ').toUpperCase()}
               </Text>
             </View>
+
+            {cushion !== null ? (
+              <View style={[styles.cushionPill, { backgroundColor: 'rgba(0, 229, 153, 0.12)', borderColor: tokens.colors.primary }]}>
+                <Sparkles size={10} color={tokens.colors.primary} />
+                <Text variant="badge" tone="brand">
+                  +{cushion.toFixed(1)} CUSHION
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
-
-        <EdgeScoreBadge score={prediction.edge_score} size="md" />
       </View>
 
-      {/* Contextual Intelligence Pills (NBA Pace, EPL xG, Def Rank) */}
+      {/* 3. Contextual Intelligence Chips */}
       {(prediction.analysis_notes?.game_pace !== undefined ||
         prediction.analysis_notes?.combined_xg !== undefined ||
         prediction.analysis_notes?.opp_def_rank !== undefined) && (
@@ -83,7 +99,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
                 ⚡ {prediction.analysis_notes.game_pace} Pace
               </Text>
               <Text variant="label" tone="secondary">
-                {prediction.analysis_notes.game_pace >= 101 ? 'High Pace' : 'Controlled'}
+                {prediction.analysis_notes.game_pace >= 101 ? 'Fast' : 'Controlled'}
               </Text>
             </View>
           )}
@@ -94,7 +110,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
                 ⚽ {prediction.analysis_notes.combined_xg} xG
               </Text>
               <Text variant="label" tone="secondary">
-                Match Expectancy
+                Expectancy
               </Text>
             </View>
           )}
@@ -112,7 +128,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         </View>
       )}
 
-      {/* Model Calculated Probability vs Implied */}
+      {/* 4. Model Calculated Probability Spectrum */}
       <View style={styles.probWrap}>
         <ProbabilityBar
           modelProbability={prediction.model_probability}
@@ -120,34 +136,55 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         />
       </View>
 
-      {/* Quantitative Breakdown: Fair Odds vs Best Odds & Kelly */}
-      <Card elevation="inset" style={styles.metricsGrid}>
-        <MetricTile
-          label="MODEL EDGE"
-          value={`+${prediction.ev_percentage.toFixed(1)}%`}
-          sublabel="True EV"
-          tone="primary"
-        />
-        <MetricTile
-          label="BEST ODDS"
-          value={prediction.sportsbook_odds.toFixed(2)}
-          sublabel={prediction.best_bookmaker}
-        />
-        <MetricTile
-          label="FAIR ODDS"
-          value={prediction.fair_odds.toFixed(2)}
-          sublabel="Vig-stripped"
-          tone="secondary"
-        />
-        <MetricTile
-          label="1/4 KELLY"
-          value={`${prediction.recommended_units}u`}
-          sublabel="Staking"
-          tone="tertiary"
-        />
-      </Card>
+      {/* 5. Quantitative Arbitrage Matrix Strip */}
+      <View style={[styles.arbitrageStrip, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+        <View style={styles.arbitrageCol}>
+          <Text variant="label" tone="tertiary">
+            MODEL EDGE
+          </Text>
+          <Text variant="dataHero" tone="brand">
+            +{prediction.ev_percentage.toFixed(1)}%
+          </Text>
+          <Text variant="label" tone="secondary">
+            Expected Value
+          </Text>
+        </View>
 
-      {/* Expandable Matchup Context */}
+        <View style={[styles.stripDivider, { backgroundColor: tokens.colors.border }]} />
+
+        <View style={styles.arbitrageCol}>
+          <Text variant="label" tone="tertiary">
+            MARKET SPREAD
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+            <Text variant="dataLg" tone="primary">
+              @{prediction.sportsbook_odds.toFixed(2)}
+            </Text>
+            <Text variant="label" tone="tertiary">
+              vs {prediction.fair_odds.toFixed(2)}
+            </Text>
+          </View>
+          <Text variant="label" tone="secondary">
+            {prediction.best_bookmaker} vs Fair
+          </Text>
+        </View>
+
+        <View style={[styles.stripDivider, { backgroundColor: tokens.colors.border }]} />
+
+        <View style={styles.arbitrageCol}>
+          <Text variant="label" tone="tertiary">
+            1/4 KELLY
+          </Text>
+          <Text variant="dataLg" tone="warning">
+            {prediction.recommended_units}u
+          </Text>
+          <Text variant="label" tone="secondary">
+            Optimal Stake
+          </Text>
+        </View>
+      </View>
+
+      {/* 6. Expandable Matchup Context */}
       {prediction.analysis_notes ? (
         <View style={styles.contextContainer}>
           <TouchableOpacity
@@ -159,9 +196,9 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
               {expanded ? 'HIDE MATCHUP METRICS' : 'VIEW MATCHUP METRICS'}
             </Text>
             {expanded ? (
-              <ChevronUp size={14} color={tokens.colors.textTertiary} />
+              <ChevronUp size={13} color={tokens.colors.textTertiary} />
             ) : (
-              <ChevronDown size={14} color={tokens.colors.textTertiary} />
+              <ChevronDown size={13} color={tokens.colors.textTertiary} />
             )}
           </TouchableOpacity>
 
@@ -224,7 +261,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         </View>
       ) : null}
 
-      {/* Action Footer: Add to Bet Slip & Deep Analytics */}
+      {/* 7. Action Footer: Deep Analytics & Add to Bet Slip */}
       <View style={[styles.cardFooter, { borderTopColor: tokens.colors.border }]}>
         <TouchableOpacity
           style={[styles.analyticsTriggerBtn, { borderColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}
@@ -238,9 +275,9 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         </TouchableOpacity>
 
         <Button
-          label={inSlip ? 'In Slip' : '+ Add to Slip'}
-          variant={inSlip ? 'primary' : 'ghost'}
-          icon={inSlip ? <Check size={16} color={tokens.colors.onPrimary} /> : <Plus size={16} color={tokens.colors.textPrimary} />}
+          label={inSlip ? 'In Betslip ✓' : '+ Add to Slip'}
+          variant={inSlip ? 'primary' : 'primary'}
+          icon={inSlip ? <Check size={16} color={tokens.colors.onPrimary} /> : <Plus size={16} color={tokens.colors.onPrimary} />}
           onPress={toggleSlip}
           style={styles.actionBtn}
         />
@@ -287,6 +324,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
+    gap: 10,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -296,7 +334,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 8,
     borderBottomWidth: 1,
-    marginBottom: 10,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -304,46 +341,49 @@ const styles = StyleSheet.create({
     gap: 8,
     flex: 1,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   matchTitleText: {
     flex: 1,
   },
-  propRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
+  propHeroSection: {
+    gap: 4,
   },
   propDetails: {
-    flex: 1,
     gap: 4,
+  },
+  playerName: {
+    fontSize: 18,
+    letterSpacing: -0.3,
   },
   selectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   marketPill: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    borderWidth: 1,
   },
-  probWrap: {
-    marginBottom: 10,
-  },
-  metricsGrid: {
+  cushionPill: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    marginBottom: 10,
-  },
-  contextContainer: {
-    marginBottom: 10,
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
   },
   contextPillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginBottom: 10,
   },
   contextChip: {
     flexDirection: 'row',
@@ -353,6 +393,40 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
+  },
+  probWrap: {
+    paddingVertical: 2,
+  },
+  arbitrageStrip: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  arbitrageCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  stripDivider: {
+    width: 1,
+    height: '80%',
+    alignSelf: 'center',
+  },
+  contextContainer: {
+    gap: 4,
+  },
+  expandToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 4,
+  },
+  statsList: {
+    borderTopWidth: 1,
+    paddingTop: 6,
   },
   expandedMetricBlock: {
     paddingVertical: 4,
@@ -369,17 +443,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
-  expandToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 6,
-  },
-  statsList: {
-    borderTopWidth: 1,
-    paddingTop: 6,
-  },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -392,16 +455,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
-    height: 40,
+    height: 42,
     borderRadius: 8,
     borderWidth: 1,
   },
-  footerNote: {
-    flex: 1,
-  },
   actionBtn: {
-    minHeight: 44,
-    paddingHorizontal: 16,
+    minHeight: 42,
+    paddingHorizontal: 18,
   },
   lockedOverlay: {
     position: 'absolute',

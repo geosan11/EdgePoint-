@@ -87,7 +87,7 @@ export default function TrackerScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Tracker Sub-navigation */}
-      <View style={[styles.subNavBar, { borderBottomColor: tokens.colors.border }]}>
+      <View style={[styles.subNavBar, { borderBottomColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}>
         <TouchableOpacity
           style={[
             styles.navTab,
@@ -96,8 +96,12 @@ export default function TrackerScreen() {
           onPress={() => setActiveTab('slip')}
           activeOpacity={0.7}
         >
-          <Text variant="title" tone={activeTab === 'slip' ? 'brand' : 'secondary'}>
-            Betslip ({slipLegs.length})
+          <Text
+            variant="label"
+            tone={activeTab === 'slip' ? 'brand' : 'secondary'}
+            style={{ fontWeight: activeTab === 'slip' ? '800' : '600', letterSpacing: 0.6 }}
+          >
+            BETSLIP ({slipLegs.length})
           </Text>
         </TouchableOpacity>
 
@@ -109,8 +113,12 @@ export default function TrackerScreen() {
           onPress={() => setActiveTab('ledger')}
           activeOpacity={0.7}
         >
-          <Text variant="title" tone={activeTab === 'ledger' ? 'brand' : 'secondary'}>
-            Bankroll & ROI
+          <Text
+            variant="label"
+            tone={activeTab === 'ledger' ? 'brand' : 'secondary'}
+            style={{ fontWeight: activeTab === 'ledger' ? '800' : '600', letterSpacing: 0.6 }}
+          >
+            BANKROLL & ROI
           </Text>
         </TouchableOpacity>
 
@@ -122,8 +130,12 @@ export default function TrackerScreen() {
           onPress={() => setActiveTab('anchor')}
           activeOpacity={0.7}
         >
-          <Text variant="title" tone={activeTab === 'anchor' ? 'brand' : 'secondary'}>
-            Daily Anchor
+          <Text
+            variant="label"
+            tone={activeTab === 'anchor' ? 'brand' : 'secondary'}
+            style={{ fontWeight: activeTab === 'anchor' ? '800' : '600', letterSpacing: 0.6 }}
+          >
+            DAILY ANCHOR
           </Text>
         </TouchableOpacity>
       </View>
@@ -153,19 +165,19 @@ export default function TrackerScreen() {
                   ]}
                 >
                   <View style={styles.legDetails}>
-                    <Text variant="bodySm" tone="secondary">
-                      {leg.fixture}
+                    <Text variant="label" tone="tertiary">
+                      {leg.fixture.toUpperCase()}
                     </Text>
                     <Text variant="title" style={styles.propTitle}>
                       {leg.prop}
                     </Text>
-                    <Text variant="dataSm" tone="tertiary">
-                      {leg.bookmaker} · <Text variant="dataSm" tone="brand">{leg.ev}</Text>
+                    <Text variant="label" tone="brand">
+                      {leg.bookmaker.toUpperCase()} · {leg.ev}
                     </Text>
                   </View>
 
                   <View style={styles.legAction}>
-                    <Text variant="dataMd" tone="brand">
+                    <Text variant="dataLg" tone="brand">
                       {leg.odds.toFixed(2)}
                     </Text>
                     <TouchableOpacity
@@ -189,32 +201,32 @@ export default function TrackerScreen() {
             {/* Dynamic Mathematical Slip Summary */}
             <Card elevation="inset" style={styles.metricsSummary}>
               <View style={styles.metricRow}>
-                <Text variant="bodySm" tone="secondary">
-                  Combined Odds
+                <Text variant="label" tone="secondary">
+                  COMBINED PARLAY ODDS
                 </Text>
-                <Text variant="dataMd" tone="brand">
+                <Text variant="dataHero" tone="brand">
                   {metrics.totalOdds.toFixed(2)}
                 </Text>
               </View>
               <View style={styles.metricRow}>
-                <Text variant="bodySm" tone="secondary">
-                  Calculated Win Rate
+                <Text variant="label" tone="secondary">
+                  CALCULATED WIN PROBABILITY
                 </Text>
-                <Text variant="dataSm">{(metrics.jointProb * 100).toFixed(1)}%</Text>
+                <Text variant="dataMd">{(metrics.jointProb * 100).toFixed(1)}%</Text>
               </View>
               <View style={styles.metricRow}>
-                <Text variant="bodySm" tone="secondary">
-                  Combined Model Edge
+                <Text variant="label" tone="secondary">
+                  COMBINED MODEL SURPLUS
                 </Text>
-                <Text variant="dataSm" tone="brand">
+                <Text variant="dataMd" tone="brand">
                   +{metrics.jointEv.toFixed(1)}%
                 </Text>
               </View>
               <View style={styles.metricRow}>
-                <Text variant="bodySm" tone="secondary">
-                  1/4 Kelly Recommendation
+                <Text variant="label" tone="secondary">
+                  1/4 KELLY ALLOCATION
                 </Text>
-                <Text variant="dataSm" tone="warning">
+                <Text variant="dataMd" tone="warning">
                   {metrics.recommendedUnits} Units
                 </Text>
               </View>
@@ -388,10 +400,10 @@ export default function TrackerScreen() {
               <Card key={bet.id} style={styles.betCard}>
                 <View style={styles.betHeader}>
                   <View style={styles.betLeft}>
-                    <Text variant="bodySm" tone="secondary">
-                      {bet.fixture} · {bet.date}
+                    <Text variant="label" tone="tertiary">
+                      {bet.fixture.toUpperCase()} · {bet.date}
                     </Text>
-                    <Text variant="title">{bet.prop}</Text>
+                    <Text variant="title" style={{ marginTop: 2 }}>{bet.prop}</Text>
                   </View>
 
                   <View style={styles.betRight}>
@@ -400,7 +412,7 @@ export default function TrackerScreen() {
                       tone={bet.result === 'won' ? 'positive' : bet.result === 'lost' ? 'negative' : 'warning'}
                       size="sm"
                     />
-                    <Text variant="dataMd" tone="brand">
+                    <Text variant="dataLg" tone="brand" style={{ marginTop: 2 }}>
                       @{bet.odds.toFixed(2)}
                     </Text>
                   </View>

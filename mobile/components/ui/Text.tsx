@@ -36,8 +36,18 @@ export function Text({ variant = 'body', tone = 'primary', style, children, ...r
 
   const colorStyle: TextStyle | undefined = tone === 'inherit' ? undefined : { color: toneColor[tone] };
 
+  const isDataVariant =
+    variant === 'dataHero' ||
+    variant === 'dataLg' ||
+    variant === 'dataMd' ||
+    variant === 'dataSm';
+
+  const tabularStyle: TextStyle | undefined = isDataVariant
+    ? { fontVariant: ['tabular-nums'] }
+    : undefined;
+
   return (
-    <RNText style={[tokens.typography[variant], colorStyle, style]} {...rest}>
+    <RNText style={[tokens.typography[variant], tabularStyle, colorStyle, style]} {...rest}>
       {children}
     </RNText>
   );

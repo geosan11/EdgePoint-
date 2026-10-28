@@ -68,7 +68,7 @@ export default function EdgesScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: tokens.colors.background }]}>
       {/* Top Filter Bar: Sport Selector */}
-      <View style={[styles.sportBar, { borderBottomColor: tokens.colors.border }]}>
+      <View style={[styles.sportBar, { borderBottomColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}>
         {sportsOptions.map((opt) => {
           const active = selectedSport === opt.value;
           return (
@@ -77,15 +77,19 @@ export default function EdgesScreen() {
               style={[
                 styles.sportTab,
                 {
-                  backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
-                  borderColor: active ? tokens.colors.primary : tokens.colors.border,
+                  backgroundColor: active ? tokens.colors.surface : 'transparent',
+                  borderColor: active ? tokens.colors.primary : 'transparent',
                 },
               ]}
               onPress={() => setSport(opt.value)}
               activeOpacity={0.7}
             >
-              <Text variant="title" tone={active ? 'brand' : 'secondary'} style={styles.tabText}>
-                {opt.label}
+              <Text
+                variant="label"
+                tone={active ? 'brand' : 'secondary'}
+                style={{ fontWeight: active ? '800' : '600', letterSpacing: 0.6 }}
+              >
+                {opt.label.toUpperCase()}
               </Text>
             </TouchableOpacity>
           );
@@ -114,8 +118,12 @@ export default function EdgesScreen() {
                 onPress={() => setMarket(m.value)}
                 activeOpacity={0.7}
               >
-                <Text variant="label" tone={active ? 'brand' : 'secondary'}>
-                  {m.label}
+                <Text
+                  variant="label"
+                  tone={active ? 'brand' : 'secondary'}
+                  style={{ fontWeight: active ? '800' : '600' }}
+                >
+                  {m.label.toUpperCase()}
                 </Text>
               </TouchableOpacity>
             );
@@ -123,16 +131,21 @@ export default function EdgesScreen() {
         </ScrollView>
       </View>
 
-      {/* Live Discrepancy Banner */}
+      {/* Live Discrepancy Terminal Banner */}
       <View
         style={[
           styles.alertBanner,
-          { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+          { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
         ]}
       >
-        <Sparkles size={14} color={tokens.colors.primary} />
-        <Text variant="title" tone="brand" style={styles.alertText}>
-          {filteredPredictions.length} +EV Model Discrepancies Monitored Against Pinnacle
+        <View style={styles.alertLeft}>
+          <Sparkles size={13} color={tokens.colors.primary} />
+          <Text variant="label" tone="brand" style={{ letterSpacing: 0.6 }}>
+            {filteredPredictions.length} ARBITRAGE & +EV EDGES
+          </Text>
+        </View>
+        <Text variant="label" tone="tertiary">
+          BENCHMARK: PINNACLE NO-VIG
         </Text>
       </View>
 
@@ -217,16 +230,20 @@ const styles = StyleSheet.create({
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginHorizontal: 16,
     marginVertical: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
-    gap: 8,
+  },
+  alertLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   alertText: {
-    flex: 1,
     fontSize: 11,
   },
   listContainer: {

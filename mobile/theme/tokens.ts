@@ -35,6 +35,7 @@ export type TypographyVariant =
   | 'body'
   | 'bodySm'
   | 'label'
+  | 'dataHero'
   | 'dataLg'
   | 'dataMd'
   | 'dataSm'
@@ -75,19 +76,20 @@ const FONT_FAMILY = Platform.select({
   default: 'System',
 });
 
-// Single Font: Inter with tight letter tracking on headers & tabular figures for odds and data
+// High-Conviction Typography: Inter with tabular figures for odds and metrics
 const typography: Typography = {
-  display: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
-  headline: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 18, lineHeight: 24, letterSpacing: -0.3 },
-  headlineSm: { fontFamily: FONT_FAMILY, fontWeight: '600', fontSize: 15, lineHeight: 20, letterSpacing: -0.2 },
-  title: { fontFamily: FONT_FAMILY, fontWeight: '600', fontSize: 13, lineHeight: 18 },
-  body: { fontFamily: FONT_FAMILY, fontWeight: '400', fontSize: 13, lineHeight: 18 },
-  bodySm: { fontFamily: FONT_FAMILY, fontWeight: '400', fontSize: 11, lineHeight: 15 },
-  label: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 10, lineHeight: 13, letterSpacing: 0.5 },
-  dataLg: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 18, lineHeight: 22, letterSpacing: -0.2 },
-  dataMd: { fontFamily: FONT_FAMILY, fontWeight: '600', fontSize: 14, lineHeight: 18, letterSpacing: -0.1 },
-  dataSm: { fontFamily: FONT_FAMILY, fontWeight: '500', fontSize: 12, lineHeight: 15 },
-  badge: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 10, lineHeight: 12, letterSpacing: 0.4 },
+  display: { fontFamily: FONT_FAMILY, fontWeight: '800', fontSize: 26, lineHeight: 32, letterSpacing: -0.6 },
+  headline: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 20, lineHeight: 26, letterSpacing: -0.4 },
+  headlineSm: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 16, lineHeight: 22, letterSpacing: -0.2 },
+  title: { fontFamily: FONT_FAMILY, fontWeight: '600', fontSize: 13, lineHeight: 18, letterSpacing: -0.1 },
+  body: { fontFamily: FONT_FAMILY, fontWeight: '400', fontSize: 13, lineHeight: 19 },
+  bodySm: { fontFamily: FONT_FAMILY, fontWeight: '400', fontSize: 11, lineHeight: 16 },
+  label: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 10, lineHeight: 13, letterSpacing: 0.7 },
+  dataHero: { fontFamily: FONT_FAMILY, fontWeight: '800', fontSize: 24, lineHeight: 28, letterSpacing: -0.5 },
+  dataLg: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 19, lineHeight: 24, letterSpacing: -0.3 },
+  dataMd: { fontFamily: FONT_FAMILY, fontWeight: '700', fontSize: 15, lineHeight: 19, letterSpacing: -0.1 },
+  dataSm: { fontFamily: FONT_FAMILY, fontWeight: '600', fontSize: 12, lineHeight: 16 },
+  badge: { fontFamily: FONT_FAMILY, fontWeight: '800', fontSize: 10, lineHeight: 12, letterSpacing: 0.6 },
 };
 
 const spacing: Spacing = {
@@ -105,28 +107,27 @@ const radius: Radius = {
   sm: 4,
   md: 6,
   lg: 8,
-  xl: 12,
-  xxl: 16,
+  xl: 10,
+  xxl: 14,
   full: 9999,
 };
 
-// Monochromatic dark baseline (pure black #000000, slate grays #111827, #1F2937, #9CA3AF, white text)
-// Paired strictly with Electric Emerald (#00E599), Red (#EF4444), and Amber (#F59E0B)
+// True-Black Obsidian Terminal Theme
 export const darkTokens: ThemeTokens = {
   mode: 'dark',
   typography,
   spacing,
   radius,
   colors: {
-    background: '#000000',
-    surface: '#111827',
-    surfaceElevated: '#1A2234',
-    surfaceInset: '#0B0F19',
-    border: '#1F2937',
-    borderStrong: '#374151',
+    background: '#07080A',
+    surface: '#0F1116',
+    surfaceElevated: '#151820',
+    surfaceInset: '#0A0B0E',
+    border: '#1E222B',
+    borderStrong: '#2E3442',
     textPrimary: '#FFFFFF',
-    textSecondary: '#9CA3AF',
-    textTertiary: '#6B7280',
+    textSecondary: '#949CAE',
+    textTertiary: '#5A6272',
     primary: '#00E599', // Electric Emerald / Neon Mint
     primarySoft: 'rgba(0, 229, 153, 0.12)',
     onPrimary: '#000000',
@@ -138,14 +139,14 @@ export const darkTokens: ThemeTokens = {
     onTertiary: '#000000',
     warning: '#F59E0B',
     warningSoft: 'rgba(245, 158, 11, 0.12)',
-    negative: '#EF4444', // Solely for negative EV / losses / errors
+    negative: '#EF4444',
     negativeSoft: 'rgba(239, 68, 68, 0.12)',
     onNegative: '#FFFFFF',
-    overlay: 'rgba(0, 0, 0, 0.85)',
+    overlay: 'rgba(0, 0, 0, 0.88)',
   },
 };
 
-// Light institutional terminal mode
+// Clean Institutional White Mode
 export const lightTokens: ThemeTokens = {
   mode: 'light',
   typography,

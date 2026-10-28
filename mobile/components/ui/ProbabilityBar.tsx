@@ -25,33 +25,35 @@ export function ProbabilityBar({
       {showLabels ? (
         <View style={styles.labelRow}>
           <View style={styles.metricItem}>
-            <Text variant="badge" tone="secondary" style={styles.caption}>
-              CALCULATED WIN RATE
+            <Text variant="label" tone="tertiary" style={styles.caption}>
+              CALCULATED WIN PROBABILITY
             </Text>
-            <Text variant="dataSm" tone="brand">
-              {modelPct.toFixed(1)}%
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+              <Text variant="dataLg" tone="brand">
+                {modelPct.toFixed(1)}%
+              </Text>
+              <Text variant="label" tone="tertiary">
+                vs {impliedPct.toFixed(1)}% Implied
+              </Text>
+            </View>
           </View>
 
-          <View style={[styles.metricItem, { alignItems: 'flex-end' }]}>
-            <Text variant="badge" tone="tertiary" style={styles.caption}>
-              IMPLIED / EDGE
-            </Text>
-            <Text variant="dataSm" tone={edgePct > 0 ? 'brand' : 'negative'}>
-              {impliedPct.toFixed(1)}% ({edgePct >= 0 ? `+${edgePct.toFixed(1)}%` : `${edgePct.toFixed(1)}%`})
+          <View style={[styles.edgePill, { backgroundColor: edgePct >= 0 ? 'rgba(0, 229, 153, 0.12)' : 'rgba(239, 68, 68, 0.12)', borderColor: edgePct >= 0 ? tokens.colors.primary : tokens.colors.negative }]}>
+            <Text variant="badge" tone={edgePct >= 0 ? 'brand' : 'negative'}>
+              {edgePct >= 0 ? `+${edgePct.toFixed(1)}% PROB SURPLUS` : `${edgePct.toFixed(1)}% NEGATIVE EV`}
             </Text>
           </View>
         </View>
       ) : null}
 
-      {/* Progress Track */}
+      {/* High-Precision Probability Spectrum Track */}
       <View
         style={[
           styles.track,
           { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
         ]}
       >
-        {/* Bookmaker Implied Fill */}
+        {/* Implied Breakeven Fill */}
         <View
           style={[
             styles.impliedFill,
@@ -61,6 +63,7 @@ export function ProbabilityBar({
             },
           ]}
         />
+
         {/* Model Edge Margin (if model > implied) */}
         {edgePct > 0 ? (
           <View
@@ -74,6 +77,17 @@ export function ProbabilityBar({
             ]}
           />
         ) : null}
+
+        {/* Implied Breakeven Line Indicator */}
+        <View
+          style={[
+            styles.thresholdMarker,
+            {
+              left: `${impliedPct}%`,
+              backgroundColor: '#FFFFFF',
+            },
+          ]}
+        />
       </View>
     </View>
   );
@@ -87,18 +101,25 @@ const styles = StyleSheet.create({
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    marginBottom: 2,
   },
   metricItem: {
     gap: 2,
   },
   caption: {
     fontSize: 9,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+  },
+  edgePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
   },
   track: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -113,5 +134,12 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'absolute',
     top: 0,
+  },
+  thresholdMarker: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    zIndex: 3,
   },
 });

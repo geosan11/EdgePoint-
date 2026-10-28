@@ -5,7 +5,7 @@ import { TipsterProfile } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
 import { useCommunityStore } from '../stores/useCommunityStore';
 import { useTheme } from '../stores/useThemeStore';
-import { Badge, Button, Card, MetricTile, Text } from './ui';
+import { Badge, Button, Card, Text } from './ui';
 
 interface TipsterCardProps {
   tipster: TipsterProfile;
@@ -57,7 +57,7 @@ export function TipsterCard({ tipster }: TipsterCardProps) {
 
   return (
     <Card style={styles.card}>
-      {/* 1. Header with Avatar & Identity */}
+      {/* 1. Header with Avatar & Audited Identity */}
       <View style={styles.header}>
         <View style={styles.identityLeft}>
           <View style={[styles.avatarBox, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.primary }]}>
@@ -78,7 +78,7 @@ export function TipsterCard({ tipster }: TipsterCardProps) {
               <Text variant="dataSm" tone="secondary">
                 @{tipster.username}
               </Text>
-              <Text variant="label" tone="tertiary">
+              <Text variant="label" tone="brand">
                 · {tipster.recentStreak}
               </Text>
             </View>
@@ -100,50 +100,79 @@ export function TipsterCard({ tipster }: TipsterCardProps) {
             {tipster.specialty}
           </Text>
         </View>
-        <Text variant="bodySm" tone="secondary" style={styles.bioText}>
+        <Text variant="body" tone="secondary" style={styles.bioText}>
           {tipster.bio}
         </Text>
       </View>
 
       {/* 3. Audited Performance Grid */}
-      <Card elevation="inset" style={styles.metricsGrid}>
-        <MetricTile
-          label="WIN RATE"
-          value={`${tipster.winRate}%`}
-          sublabel="Audited"
-          tone="primary"
-        />
-        <MetricTile
-          label="30D ROI"
-          value={`+${tipster.roiPct}%`}
-          sublabel="Yield"
-          tone="primary"
-        />
-        <MetricTile
-          label="TOTAL UNITS"
-          value={`+${tipster.unitsWon}u`}
-          sublabel="Net Profit"
-          tone="primary"
-        />
-        <MetricTile
-          label="AVG CLV"
-          value={`+${tipster.clvPct}%`}
-          sublabel="Closing Line"
-          tone="secondary"
-        />
-      </Card>
+      <View style={[styles.metricsGrid, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+        <View style={styles.metricCol}>
+          <Text variant="label" tone="tertiary">
+            WIN RATE
+          </Text>
+          <Text variant="dataLg" tone="brand">
+            {tipster.winRate}%
+          </Text>
+          <Text variant="label" tone="secondary">
+            Audited
+          </Text>
+        </View>
+
+        <View style={[styles.gridDivider, { backgroundColor: tokens.colors.border }]} />
+
+        <View style={styles.metricCol}>
+          <Text variant="label" tone="tertiary">
+            30D ROI
+          </Text>
+          <Text variant="dataLg" tone="brand">
+            +{tipster.roiPct}%
+          </Text>
+          <Text variant="label" tone="secondary">
+            Yield
+          </Text>
+        </View>
+
+        <View style={[styles.gridDivider, { backgroundColor: tokens.colors.border }]} />
+
+        <View style={styles.metricCol}>
+          <Text variant="label" tone="tertiary">
+            NET UNITS
+          </Text>
+          <Text variant="dataLg" tone="primary">
+            +{tipster.unitsWon}u
+          </Text>
+          <Text variant="label" tone="secondary">
+            Profit
+          </Text>
+        </View>
+
+        <View style={[styles.gridDivider, { backgroundColor: tokens.colors.border }]} />
+
+        <View style={styles.metricCol}>
+          <Text variant="label" tone="tertiary">
+            AVG CLV
+          </Text>
+          <Text variant="dataLg" tone="brand">
+            +{tipster.clvPct}%
+          </Text>
+          <Text variant="label" tone="secondary">
+            Beating Line
+          </Text>
+        </View>
+      </View>
 
       {/* 4. Subscription Footer */}
       <View style={[styles.footer, { borderTopColor: tokens.colors.border }]}>
         <View style={styles.priceWrap}>
           <Text variant="label" tone="tertiary">
-            MEMBERSHIP
+            MEMBERSHIP TIER
           </Text>
-          <Text variant="headlineSm" tone="brand">
+          <Text variant="headline" tone="brand">
             {currencySymbol}
             {price}
             <Text variant="dataSm" tone="secondary">
-              /mo
+              /month
             </Text>
           </Text>
         </View>
@@ -181,7 +210,7 @@ const styles = StyleSheet.create({
   avatarBox: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 8,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -207,12 +236,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bioText: {
-    lineHeight: 18,
+    lineHeight: 19,
   },
   metricsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  metricCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  gridDivider: {
+    width: 1,
+    height: '80%',
+    alignSelf: 'center',
   },
   footer: {
     flexDirection: 'row',
@@ -226,6 +267,6 @@ const styles = StyleSheet.create({
   },
   subBtn: {
     minHeight: 42,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
   },
 });

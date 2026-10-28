@@ -16,18 +16,20 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: tokens.colors.background,
-          borderTopColor: tokens.colors.border,
+          backgroundColor: '#080A0E',
+          borderTopColor: '#1E222B',
           borderTopWidth: 1,
-          height: Platform.select({ ios: 84, default: 64 }),
+          height: Platform.select({ ios: 84, default: 66 }),
           paddingBottom: Platform.select({ ios: 24, default: 8 }),
           paddingTop: 8,
+          elevation: 10,
         },
-        tabBarActiveTintColor: tokens.colors.primary, // Electric Emerald
+        tabBarActiveTintColor: tokens.colors.primary, // #00E599 Electric Emerald
         tabBarInactiveTintColor: tokens.colors.textTertiary,
         tabBarLabelStyle: {
-          fontWeight: '600',
+          fontWeight: '700',
           fontSize: 10,
+          letterSpacing: 0.4,
           marginTop: 2,
         },
       }}
@@ -36,15 +38,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Fixtures',
+          title: 'FIXTURES',
           tabBarBadge: 2,
           tabBarBadgeStyle: {
             backgroundColor: tokens.colors.primary,
             color: tokens.colors.onPrimary,
             fontSize: 9,
-            fontWeight: '700',
+            fontWeight: '800',
+            fontVariant: ['tabular-nums'],
+            height: 16,
+            minWidth: 16,
+            lineHeight: 16,
           },
-          tabBarIcon: ({ color, size }) => <Calendar size={19} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Calendar size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          ),
         }}
       />
 
@@ -52,15 +60,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="edges"
         options={{
-          title: 'Edges',
+          title: '+EV EDGES',
           tabBarBadge: 6,
           tabBarBadgeStyle: {
             backgroundColor: tokens.colors.primary,
             color: tokens.colors.onPrimary,
             fontSize: 9,
-            fontWeight: '700',
+            fontWeight: '800',
+            fontVariant: ['tabular-nums'],
+            height: 16,
+            minWidth: 16,
+            lineHeight: 16,
           },
-          tabBarIcon: ({ color, size }) => <TrendingUp size={19} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TrendingUp size={19} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          ),
         }}
       />
 
@@ -68,15 +82,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tracker"
         options={{
-          title: 'Tracker',
+          title: 'TRACKER',
           tabBarBadge: slipLegs.length > 0 ? slipLegs.length : activeBetsCount > 0 ? activeBetsCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: tokens.colors.primary,
             color: tokens.colors.onPrimary,
             fontSize: 9,
-            fontWeight: '700',
+            fontWeight: '800',
+            fontVariant: ['tabular-nums'],
+            height: 16,
+            minWidth: 16,
+            lineHeight: 16,
           },
-          tabBarIcon: ({ color, size }) => <Layers size={19} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Layers size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          ),
         }}
       />
 
@@ -84,8 +104,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="insights"
         options={{
-          title: 'Community',
-          tabBarIcon: ({ color, size }) => <Users size={19} color={color} />,
+          title: 'SYNDICATE',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Users size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          ),
         }}
       />
 
@@ -93,8 +115,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={19} color={color} />,
+          title: 'TERMINAL',
+          tabBarIcon: ({ color, size, focused }) => (
+            <User size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          ),
         }}
       />
 

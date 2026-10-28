@@ -76,24 +76,24 @@ export default function InsightsScreen() {
   });
 
   const viewOptions: { label: string; value: CommunityView }[] = [
-    { label: 'Sharp Feed 💬', value: 'feed' },
-    { label: 'Top Tipsters 👑', value: 'tipsters' },
-    { label: 'Sharp Steam Radar ⚡', value: 'steam' },
-    { label: 'Devig Calculator 🧮', value: 'devig' },
-    { label: 'League Trends 📊', value: 'trends' },
+    { label: 'SYNDICATE FEED', value: 'feed' },
+    { label: 'TOP TIPSTERS 👑', value: 'tipsters' },
+    { label: 'LINE STEAM RADAR ⚡', value: 'steam' },
+    { label: 'DEVIG CALCULATOR 🧮', value: 'devig' },
+    { label: 'LEAGUE TRENDS 📊', value: 'trends' },
   ];
 
   const feedFilterOptions: { label: string; value: FeedFilter }[] = [
-    { label: 'All Activity', value: 'all' },
-    { label: 'Picks 🎯', value: 'predictions' },
-    { label: 'News & Intel 📰', value: 'news' },
-    { label: `Subscribed (${subscribedTipsterIds.length}) 👑`, value: 'subscribed' },
+    { label: 'ALL ACTIVITY', value: 'all' },
+    { label: 'PICKS 🎯', value: 'predictions' },
+    { label: 'NEWS & INTEL 📰', value: 'news' },
+    { label: `SUBSCRIBED (${subscribedTipsterIds.length}) 👑`, value: 'subscribed' },
   ];
 
   return (
     <View style={[styles.screen, { backgroundColor: tokens.colors.background }]}>
       {/* 1. Top Primary Section Tabs */}
-      <View style={[styles.navBar, { borderBottomColor: tokens.colors.border }]}>
+      <View style={[styles.navBar, { borderBottomColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -107,14 +107,18 @@ export default function InsightsScreen() {
                 style={[
                   styles.navChip,
                   {
-                    backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
-                    borderColor: active ? tokens.colors.primary : tokens.colors.border,
+                    backgroundColor: active ? tokens.colors.surface : 'transparent',
+                    borderColor: active ? tokens.colors.primary : 'transparent',
                   },
                 ]}
                 onPress={() => setActiveView(opt.value)}
                 activeOpacity={0.7}
               >
-                <Text variant="title" tone={active ? 'brand' : 'secondary'} style={styles.chipText}>
+                <Text
+                  variant="label"
+                  tone={active ? 'brand' : 'secondary'}
+                  style={{ fontWeight: active ? '800' : '600', letterSpacing: 0.6 }}
+                >
                   {opt.label}
                 </Text>
               </TouchableOpacity>

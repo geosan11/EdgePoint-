@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Crown, Layers, Moon, Sun } from 'lucide-react-native';
+import { Crown, Layers, Moon, Sun, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBetStore } from '../stores/useBetStore';
@@ -26,46 +26,46 @@ export function Header() {
           backgroundColor: tokens.colors.background,
           borderBottomColor: tokens.colors.border,
           paddingTop: topInset,
-          height: 54 + topInset,
+          height: 56 + topInset,
         },
       ]}
     >
-      {/* Brand Logo & Live Pulse */}
+      {/* Brand Wordmark & Quantitative Terminal Status */}
       <View style={styles.brandRow}>
         <View style={styles.brandTitleWrap}>
           <Text variant="headline" style={styles.brandTitle}>
-            EdgePoint<Text variant="headline" tone="brand">+</Text>
+            EDGEPOINT<Text variant="headline" tone="brand" style={{ fontWeight: '900' }}>+</Text>
           </Text>
-          <View style={styles.livePulse}>
+          <View style={[styles.terminalTag, { backgroundColor: 'rgba(0, 229, 153, 0.08)', borderColor: 'rgba(0, 229, 153, 0.25)' }]}>
             <View style={[styles.pulseDot, { backgroundColor: tokens.colors.primary }]} />
-            <Text variant="badge" tone="brand" style={styles.liveText}>
-              LIVE TERMINAL
+            <Text variant="label" tone="brand" style={styles.liveText}>
+              QUANT ENGINE
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Right Action Controls: Currency Toggle, Theme, Pro Status, Betslip */}
+      {/* Right Controls: Currency, Theme, Pro Status, Betslip */}
       <View style={styles.rightControls}>
         <TouchableOpacity
-          style={[styles.smallButton, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border }]}
+          style={[styles.smallButton, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}
           onPress={toggleCurrency}
           activeOpacity={0.7}
         >
-          <Text variant="badge" tone="brand">
+          <Text variant="label" tone="brand">
             {currency === 'NGN' ? '₦ NGN' : '$ USD'}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border }]}
+          style={[styles.iconButton, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}
           onPress={toggleScheme}
           activeOpacity={0.7}
         >
           {scheme === 'dark' ? (
-            <Moon size={15} color={tokens.colors.textSecondary} />
+            <Moon size={14} color={tokens.colors.textSecondary} />
           ) : (
-            <Sun size={15} color={tokens.colors.textSecondary} />
+            <Sun size={14} color={tokens.colors.textSecondary} />
           )}
         </TouchableOpacity>
 
@@ -73,26 +73,26 @@ export function Header() {
           {isPro ? (
             <Badge label="PRO" tone="positive" filled icon={<Crown size={11} color={tokens.colors.onPrimary} />} size="sm" />
           ) : (
-            <Badge label="PRO" tone="neutral" icon={<Crown size={11} color={tokens.colors.primary} />} size="sm" />
+            <Badge label="FREE" tone="neutral" icon={<Crown size={11} color={tokens.colors.textTertiary} />} size="sm" />
           )}
         </TouchableOpacity>
 
-        {/* Betslip quick-launcher with count badge */}
+        {/* Betslip quick-launcher with count bubble */}
         <TouchableOpacity
           style={[
             styles.iconButton,
             {
-              backgroundColor: tokens.colors.surface,
+              backgroundColor: slipLegs.length > 0 ? 'rgba(0, 229, 153, 0.12)' : tokens.colors.surfaceInset,
               borderColor: slipLegs.length > 0 ? tokens.colors.primary : tokens.colors.border,
             },
           ]}
           onPress={() => router.push('/(tabs)/tracker')}
           activeOpacity={0.7}
         >
-          <Layers size={17} color={slipLegs.length > 0 ? tokens.colors.primary : tokens.colors.textSecondary} />
+          <Layers size={16} color={slipLegs.length > 0 ? tokens.colors.primary : tokens.colors.textSecondary} />
           {slipLegs.length > 0 ? (
             <View style={[styles.slipBubble, { backgroundColor: tokens.colors.primary }]}>
-              <Text variant="badge" tone="onPrimary" style={styles.slipCount}>
+              <Text variant="badge" style={[styles.slipCount, { color: '#000000' }]}>
                 {slipLegs.length}
               </Text>
             </View>
@@ -122,18 +122,22 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.4,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
-  livePulse: {
+  terminalTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
   },
   pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   liveText: {
     fontSize: 8,
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
   rightControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   smallButton: {
     height: 32,
@@ -174,6 +178,6 @@ const styles = StyleSheet.create({
   },
   slipCount: {
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 });

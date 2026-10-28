@@ -27,7 +27,7 @@ export function Card({ elevation = 'base', padded = true, style, children, ...re
           backgroundColor: background,
           borderWidth: 1,
           borderColor: tokens.colors.border,
-          borderRadius: tokens.radius.xl,
+          borderRadius: tokens.radius.lg,
           padding: padded ? tokens.spacing.md : 0,
         },
         style,

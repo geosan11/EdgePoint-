@@ -33,47 +33,84 @@ export function OddsBadge({
         styles.button,
         {
           backgroundColor: isSelected
-            ? tokens.colors.primarySoft
+            ? tokens.colors.primary
             : tokens.colors.surfaceInset,
           borderColor: isSelected
             ? tokens.colors.primary
             : hasEdge
-              ? 'rgba(0, 229, 153, 0.4)'
+              ? 'rgba(0, 229, 153, 0.45)'
               : tokens.colors.border,
+          borderLeftColor: hasEdge && !isSelected ? tokens.colors.primary : undefined,
+          borderLeftWidth: hasEdge && !isSelected ? 2.5 : 1,
         },
         style,
       ]}
       {...rest}
     >
       <View style={styles.content}>
+        {/* Top Meta Line: Market/Line & Bookmaker */}
         <View style={styles.topRow}>
           <Text
-            variant="bodySm"
-            tone={isSelected ? 'brand' : 'secondary'}
+            variant="label"
             numberOfLines={1}
-            style={styles.label}
+            style={[
+              styles.label,
+              { color: isSelected ? '#000000' : tokens.colors.textSecondary },
+            ]}
           >
             {label}
           </Text>
           {bookmaker ? (
-            <Text variant="badge" tone="tertiary" style={styles.bookmaker}>
-              {bookmaker}
-            </Text>
+            <View
+              style={[
+                styles.bookTag,
+                {
+                  backgroundColor: isSelected ? 'rgba(0,0,0,0.15)' : tokens.colors.surfaceElevated,
+                  borderColor: isSelected ? 'rgba(0,0,0,0.2)' : tokens.colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.bookText,
+                  { color: isSelected ? '#000000' : tokens.colors.textTertiary },
+                ]}
+              >
+                {bookmaker.slice(0, 4).toUpperCase()}
+              </Text>
+            </View>
           ) : null}
         </View>
 
+        {/* Hero Odds & Edge Delta */}
         <View style={styles.bottomRow}>
           <Text
-            variant="dataMd"
-            tone={isSelected ? 'brand' : 'primary'}
-            style={styles.odds}
+            variant="dataLg"
+            style={[
+              styles.odds,
+              { color: isSelected ? '#000000' : tokens.colors.textPrimary },
+            ]}
           >
             {formattedOdds}
           </Text>
           {edgeText ? (
-            <Text variant="badge" tone="brand" style={styles.edge}>
-              {edgeText}
-            </Text>
+            <View
+              style={[
+                styles.edgeTag,
+                {
+                  backgroundColor: isSelected ? '#000000' : 'rgba(0, 229, 153, 0.15)',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.edgeText,
+                  { color: isSelected ? tokens.colors.primary : tokens.colors.primary },
+                ]}
+              >
+                {edgeText}
+              </Text>
+            </View>
           ) : null}
         </View>
       </View>
@@ -83,16 +120,16 @@ export function OddsBadge({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 44,
-    minWidth: 80,
+    minHeight: 50,
+    minWidth: 84,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
   },
   content: {
-    gap: 2,
+    gap: 3,
   },
   topRow: {
     flexDirection: 'row',
@@ -107,19 +144,34 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1,
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  bookmaker: {
-    fontSize: 9,
-    textTransform: 'uppercase',
-  },
-  odds: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  edge: {
     fontSize: 10,
     fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  bookTag: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  bookText: {
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  odds: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  edgeTag: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  edgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Activity, Flame, Radio } from 'lucide-react-native';
+import { Activity, Flame, Radio, Zap } from 'lucide-react-native';
 import { MatchCard, Text } from '../../components/ui';
 import { getFixtures } from '../../lib/supabase';
 import { MatchFixture, Sport } from '../../lib/types';
@@ -38,11 +38,11 @@ export default function FixturesScreen() {
     return true;
   });
 
-  const filterOptions: { label: string; value: FilterType }[] = [
-    { label: 'All Slates', value: 'all' },
-    { label: 'Live In-Play', value: 'live' },
-    { label: 'NBA 🏀', value: 'nba' },
-    { label: 'Premier League ⚽', value: 'epl' },
+  const filterOptions: { label: string; count: number; value: FilterType }[] = [
+    { label: 'ALL SLATES', count: fixtures.length, value: 'all' },
+    { label: 'LIVE IN-PLAY', count: fixtures.filter((f) => f.status === 'live').length, value: 'live' },
+    { label: 'NBA', count: fixtures.filter((f) => f.league === 'NBA').length, value: 'nba' },
+    { label: 'PREMIER LEAGUE', count: fixtures.filter((f) => f.league === 'Premier League').length, value: 'epl' },
   ];
 
   const liveCount = fixtures.filter((f) => f.status === 'live').length;
@@ -50,7 +50,34 @@ export default function FixturesScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: tokens.colors.background }]}>
-      {/* Top Filter Chips */}
+      {/* 1. Terminal Scanner Header Bar */}
+      <View
+        style={[
+          styles.statusBar,
+          { backgroundColor: tokens.colors.surfaceInset, borderBottomColor: tokens.colors.border },
+        ]}
+      >
+        <View style={styles.statusLeft}>
+          <View style={styles.pulseDot} />
+          <Text variant="label" tone="brand" style={{ letterSpacing: 0.8 }}>
+            QUANT SCANNER ACTIVE
+          </Text>
+          <Text variant="label" tone="tertiary">
+            · 14 BOOKS
+          </Text>
+        </View>
+
+        <View style={styles.statusRight}>
+          <View style={[styles.badgePill, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}>
+            <Zap size={10} color={tokens.colors.primary} />
+            <Text variant="badge" tone="brand">
+              {edgeCount} +EV FOUND
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 2. Sleek High-Density Filter Rail */}
       <View style={[styles.filterBar, { borderBottomColor: tokens.colors.border }]}>
         <ScrollView
           horizontal
@@ -72,49 +99,50 @@ export default function FixturesScreen() {
                 onPress={() => setFilter(opt.value)}
                 activeOpacity={0.7}
               >
-                <Text variant="title" tone={active ? 'brand' : 'secondary'} style={styles.chipText}>
+                <Text
+                  variant="label"
+                  tone={active ? 'brand' : 'secondary'}
+                  style={{ fontWeight: active ? '800' : '600' }}
+                >
                   {opt.label}
                 </Text>
+                <View
+                  style={[
+                    styles.countBadge,
+                    {
+                      backgroundColor: active ? tokens.colors.primary : tokens.colors.surfaceInset,
+                    },
+                  ]}
+                >
+                  <Text
+                    variant="badge"
+                    style={{
+                      color: active ? tokens.colors.onPrimary : tokens.colors.textTertiary,
+                      fontSize: 9,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    {opt.count}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* Terminal Status Ribbon */}
-      <View
-        style={[
-          styles.statusRibbon,
-          { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
-        ]}
-      >
-        <View style={styles.ribbonItem}>
-          <Radio size={13} color={tokens.colors.primary} />
-          <Text variant="badge" tone="brand">
-            {liveCount} LIVE IN-PLAY
-          </Text>
-        </View>
-
-        <View style={styles.ribbonItem}>
-          <Flame size={13} color={tokens.colors.tertiary} />
-          <Text variant="badge" tone="secondary">
-            {edgeCount} +EV EDGES DETECTED
-          </Text>
-        </View>
-      </View>
-
-      {/* Fixtures List */}
+      {/* 3. Fixtures List */}
       <FlatList
         data={filteredFixtures}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <MatchCard match={item} />}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Radio size={32} color={tokens.colors.borderStrong} />
-            <Text variant="title" tone="secondary" style={{ marginTop: 10, marginBottom: 4 }}>
+          <View style={[styles.emptyContainer, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+            <Radio size={28} color={tokens.colors.textTertiary} />
+            <Text variant="title" tone="secondary" style={{ marginTop: 12, marginBottom: 4 }}>
               No Fixtures in Selected Filter
             </Text>
-            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 12 }}>
+            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 14 }}>
               There are currently no active matches matching this filter. Switch to all slates to view upcoming games.
             </Text>
             <TouchableOpacity
@@ -147,8 +175,40 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  statusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#00E599',
+  },
+  statusRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
   filterBar: {
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   filterScroll: {
@@ -156,44 +216,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: 12,
-  },
-  statusRibbon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginVertical: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  ribbonItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  countBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
   listContainer: {
-    paddingTop: 4,
+    paddingTop: 8,
     paddingBottom: 96,
   },
   emptyContainer: {
-    padding: 32,
-    marginHorizontal: 16,
+    margin: 16,
+    padding: 28,
+    borderRadius: 8,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyResetBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 6,
     borderWidth: 1,
   },
 });
