@@ -187,6 +187,13 @@ export default function EdgesScreen() {
         }
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        ListFooterComponent={
+          <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center' }}>
+              Analysis, not betting advice. Edges can lose.
+            </Text>
+          </View>
+        }
       />
     </View>
   );

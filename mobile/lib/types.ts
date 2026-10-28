@@ -226,3 +226,15 @@ export interface DeepAnalytics {
   projectionCushion: number;
   keyDrivers: string[];
 }
+
+export interface RecordPick {
+  id: string;
+  selection: string;
+  market: string;
+  league: string;
+  posted_at: string;
+  posted_odds: number;
+  closing_odds?: number;
+  model_probability: number;
+  result: 'won' | 'lost' | 'pending';
+}

@@ -107,7 +107,7 @@ export function DailySlipCard({ parlay }: DailySlipCardProps) {
 
       {/* Action CTA */}
       <Button
-        label={isLocked ? 'Unlock PointBlank Daily Slip' : 'Add All to Watchlist'}
+        label={isLocked ? 'Unlock PointBlank Daily Anchor' : 'Add All to Watchlist'}
         variant="primary"
         fullWidth
         onPress={handleLoadSlip}

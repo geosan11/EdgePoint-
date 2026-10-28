@@ -271,6 +271,9 @@ export function DeepAnalyticsModal({ visible, onClose, prediction }: DeepAnalyti
               fullWidth
               style={styles.actionBtn}
             />
+            <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginTop: 10 }}>
+              Analysis, not betting advice. Edges can lose.
+            </Text>
           </View>
         </View>
       </View>

@@ -3,7 +3,7 @@ import { View, ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { useTheme } from '../../stores/useThemeStore';
 
-export type MetricTone = 'primary' | 'secondary' | 'tertiary' | 'neutral';
+export type MetricTone = 'primary' | 'secondary' | 'tertiary' | 'negative' | 'neutral';
 
 interface Props {
   label: string;
@@ -21,6 +21,7 @@ export function MetricTile({ label, value, sublabel, tone = 'neutral', align = '
     primary: tokens.colors.primary,
     secondary: tokens.colors.secondary,
     tertiary: tokens.colors.tertiary,
+    negative: tokens.colors.negative,
     neutral: tokens.colors.textPrimary,
   };
 
