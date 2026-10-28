@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
-import { CircleDollarSign, Crown, Palette, Settings2, ShieldCheck, User, Zap } from 'lucide-react-native';
-import { Badge, Button, Card, Text } from '../../components/ui';
+import {
+  CircleDollarSign,
+  Crown,
+  Palette,
+  PenSquare,
+  Settings2,
+  ShieldCheck,
+  Trash2,
+  User,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react-native';
+import { CreatePostModal } from '../../components/CreatePostModal';
+import { Badge, Button, Card, MetricTile, Text } from '../../components/ui';
 import { useBetStore } from '../../stores/useBetStore';
+import { useCommunityStore } from '../../stores/useCommunityStore';
 import { ThemeMode, useTheme } from '../../stores/useThemeStore';
 
 export default function ProfileScreen() {
@@ -22,9 +36,13 @@ export default function ProfileScreen() {
     setMinEdgeScore,
   } = useBetStore();
   const { tokens, mode, setMode } = useTheme();
+  const { tipsters, subscribedTipsterIds, unsubscribeFromTipster } = useCommunityStore();
 
   const [bankrollInput, setBankrollInput] = useState(bankroll.toString());
   const [unitInput, setUnitInput] = useState(unitSize.toString());
+  const [createPostVisible, setCreatePostVisible] = useState(false);
+
+  const subscribedTipsters = tipsters.filter((t) => subscribedTipsterIds.includes(t.id));
 
   React.useEffect(() => {
     setBankrollInput(bankroll.toString());
@@ -267,7 +285,95 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
-      {/* 4. Model Testing Simulator */}
+      {/* 4. Subscribed Tipsters Management */}
+      <Card style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Users size={18} color={tokens.colors.primary} />
+          <Text variant="headlineSm">Subscribed Tipsters ({subscribedTipsters.length})</Text>
+        </View>
+
+        {subscribedTipsters.length === 0 ? (
+          <View style={[styles.emptySubBox, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+            <Text variant="bodySm" tone="secondary" style={{ textAlign: 'center' }}>
+              You have no active tipster subscriptions. Explore the Community tab to subscribe to verified quantitative cappers.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.subsList}>
+            {subscribedTipsters.map((tipster) => (
+              <View
+                key={tipster.id}
+                style={[
+                  styles.subItem,
+                  { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border },
+                ]}
+              >
+                <View style={styles.subLeft}>
+                  <View style={[styles.subAvatar, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.primary }]}>
+                    <Text style={{ fontSize: 16 }}>{tipster.avatar}</Text>
+                  </View>
+                  <View style={{ gap: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text variant="title">{tipster.displayName}</Text>
+                      <Badge label="VIP ACTIVE" tone="positive" size="sm" />
+                    </View>
+                    <Text variant="label" tone="secondary">
+                      @{tipster.username} · {tipster.winRate}% Win Rate · +{tipster.roiPct}% ROI
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.cancelSubBtn, { borderColor: tokens.colors.border }]}
+                  onPress={() => {
+                    Alert.alert(
+                      'Unsubscribe',
+                      `Cancel subscription to @${tipster.username}?`,
+                      [
+                        { text: 'Keep Active', style: 'cancel' },
+                        {
+                          text: 'Unsubscribe',
+                          style: 'destructive',
+                          onPress: () => unsubscribeFromTipster(tipster.id),
+                        },
+                      ]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <X size={14} color={tokens.colors.negative} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+      </Card>
+
+      {/* 5. Creator Hub & Personal Record */}
+      <Card style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Crown size={18} color={tokens.colors.primary} />
+          <Text variant="headlineSm">Creator Hub & Personal Record</Text>
+        </View>
+
+        <View style={styles.creatorMetrics}>
+          <MetricTile label="WIN RATE" value="65.5%" sublabel="Tracked" tone="primary" />
+          <MetricTile label="30D YIELD" value="+19.8%" sublabel="ROI" tone="primary" />
+          <MetricTile label="UNITS WON" value="+18.5u" sublabel="Net" tone="primary" />
+          <MetricTile label="SUBSCRIBERS" value="12" sublabel="Paying" tone="secondary" />
+        </View>
+
+        <Button
+          label="+ Publish Pick to Community Feed"
+          variant="ghost"
+          fullWidth
+          icon={<PenSquare size={15} color={tokens.colors.primary} />}
+          onPress={() => setCreatePostVisible(true)}
+          style={{ marginTop: 4 }}
+        />
+      </Card>
+
+      {/* 6. Model Testing Simulator */}
       <Card style={styles.card}>
         <View style={styles.sectionHeader}>
           <Settings2 size={18} color={tokens.colors.secondary} />
@@ -288,6 +394,8 @@ export default function ProfileScreen() {
           />
         </View>
       </Card>
+
+      <CreatePostModal visible={createPostVisible} onClose={() => setCreatePostVisible(false)} />
     </ScrollView>
   );
 }
@@ -396,5 +504,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  emptySubBox: {
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subsList: {
+    gap: 8,
+  },
+  subItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  subLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  subAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelSubBtn: {
+    padding: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  creatorMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
   },
 });

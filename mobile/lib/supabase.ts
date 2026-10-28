@@ -1,11 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import {
+  CommunityPost,
   CuratedParlay,
+  DeepAnalytics,
   LeagueTrendInsight,
   LineMovement,
   MatchFixture,
   Prediction,
   Sport,
+  TipsterProfile,
 } from './types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
@@ -536,4 +539,315 @@ export async function getLineMovements(): Promise<LineMovement[]> {
 
 export async function getInsights(): Promise<LeagueTrendInsight[]> {
   return MOCK_INSIGHTS;
+}
+
+// ========================================================
+// Verified Tipster Marketplace & Creator Profiles
+// ========================================================
+
+export const MOCK_TIPSTERS: TipsterProfile[] = [
+  {
+    id: 'tipster-1',
+    username: 'SharpShooter',
+    displayName: 'Marcus Vance',
+    avatar: '🎯',
+    badge: 'verified_sharp',
+    bio: 'Quantitative NBA pace & usage specialist. Only bet props with ≥ 4% model edge against Pinnacle fair lines.',
+    specialty: 'NBA Player Props 🏀',
+    winRate: 68.4,
+    roiPct: 22.4,
+    unitsWon: 34.5,
+    clvPct: 4.2,
+    subscribersCount: 142,
+    monthlyPriceUSD: 10,
+    monthlyPriceNGN: 3500,
+    recentStreak: '🔥 5-0 L5',
+    isVerified: true,
+  },
+  {
+    id: 'tipster-2',
+    username: 'EPLTactician',
+    displayName: 'Liam Davies',
+    avatar: '⚽',
+    badge: 'pro_capper',
+    bio: 'Bivariate Poisson match total & BTTS modeler. Exploiting retail bookmaker latency on early Premier League lines.',
+    specialty: 'EPL Match Totals & BTTS ⚽',
+    winRate: 64.2,
+    roiPct: 18.7,
+    unitsWon: 28.1,
+    clvPct: 3.8,
+    subscribersCount: 98,
+    monthlyPriceUSD: 8,
+    monthlyPriceNGN: 3000,
+    recentStreak: '🔥 4-1 L5',
+    isVerified: true,
+  },
+  {
+    id: 'tipster-3',
+    username: 'SynergyPicks',
+    displayName: 'PointBlank Algo',
+    avatar: '⚡',
+    badge: 'algo_model',
+    bio: 'Cross-league correlation engine generating synergistic daily 2-leg anchors with verified positive joint EV.',
+    specialty: 'Algorithmic Parlays ⚡',
+    winRate: 61.8,
+    roiPct: 25.6,
+    unitsWon: 41.0,
+    clvPct: 4.8,
+    subscribersCount: 215,
+    monthlyPriceUSD: 15,
+    monthlyPriceNGN: 5000,
+    recentStreak: '🔥 7-2 L10',
+    isVerified: true,
+  },
+];
+
+// ========================================================
+// Community & News Feed Posts
+// ========================================================
+
+export const MOCK_COMMUNITY_POSTS: CommunityPost[] = [
+  {
+    id: 'post-1',
+    authorId: 'tipster-1',
+    authorName: 'Marcus Vance',
+    authorUsername: 'SharpShooter',
+    authorBadge: 'verified_sharp',
+    authorWinRate: 68.4,
+    authorRoi: 22.4,
+    createdAt: '15m ago',
+    type: 'prediction',
+    league: 'NBA',
+    title: 'Stephen Curry Over 26.5 PTS vs Lakers',
+    content:
+      'Lakers allow the 4th highest 3PA to opposing primary ballhandlers. Curry has cleared 26.5 in 7 of his last 10 games with 31.8% usage. Our pace projection of 102.5 possessions gives +3.3 PTS cushion.',
+    isVip: false,
+    predictionData: {
+      fixture: 'Warriors @ Lakers',
+      prop: 'Player Points',
+      selection: 'Over',
+      line: 26.5,
+      odds: 1.95,
+      units: 1.5,
+      bookmaker: 'DraftKings',
+      modelProb: 0.58,
+    },
+    tailCount: 42,
+    fadeCount: 3,
+    commentsCount: 11,
+  },
+  {
+    id: 'post-2',
+    authorId: 'tipster-1',
+    authorName: 'Marcus Vance',
+    authorUsername: 'SharpShooter',
+    authorBadge: 'verified_sharp',
+    authorWinRate: 68.4,
+    authorRoi: 22.4,
+    createdAt: '45m ago',
+    type: 'prediction',
+    league: 'NBA',
+    title: '💎 HIGH CONVICTION VIP: Tatum Rebounds Line Misprice',
+    content:
+      'Knicks are playing small with Robinson out. Tatum is averaging 9.8 rebounds in his last 5 against top-8 defenses, and Pinnacle has already steam-shifted this line down to 1.78 while Bet365 is sleeping at 1.95.',
+    isVip: true,
+    predictionData: {
+      fixture: 'Celtics @ Knicks',
+      prop: 'Player Rebounds',
+      selection: 'Over',
+      line: 8.5,
+      odds: 1.95,
+      units: 2.0,
+      bookmaker: 'Bet365',
+      modelProb: 0.62,
+    },
+    tailCount: 68,
+    fadeCount: 2,
+    commentsCount: 19,
+  },
+  {
+    id: 'post-3',
+    authorId: 'tipster-2',
+    authorName: 'Liam Davies',
+    authorUsername: 'EPLTactician',
+    authorBadge: 'pro_capper',
+    authorWinRate: 64.2,
+    authorRoi: 18.7,
+    createdAt: '1h ago',
+    type: 'news',
+    league: 'Premier League',
+    title: 'Tactical Alert: Chelsea Playing High Line vs Saka & Havertz',
+    content:
+      'Pre-match team sheets reveal Chelsea starting with an aggressive front foot 4-3-3. Our model expectancy for Arsenal counters jumps from 1.45 xG to 1.95 xG. Over 2.5 match total is prime value.',
+    newsCategory: 'tactical',
+    isVip: false,
+    tailCount: 29,
+    fadeCount: 4,
+    commentsCount: 7,
+  },
+  {
+    id: 'post-4',
+    authorId: 'tipster-2',
+    authorName: 'Liam Davies',
+    authorUsername: 'EPLTactician',
+    authorBadge: 'pro_capper',
+    authorWinRate: 64.2,
+    authorRoi: 18.7,
+    createdAt: '2h ago',
+    type: 'prediction',
+    league: 'Premier League',
+    title: 'VIP Syndicate Play: Man City vs Liverpool BTTS (Yes)',
+    content:
+      'Bivariate Poisson matrix yields 68.4% joint probability. Both teams have scored in 6 straight Etihad encounters with a combined 3.42 xG expectancy.',
+    isVip: true,
+    predictionData: {
+      fixture: 'Man City vs Liverpool',
+      prop: 'BTTS',
+      selection: 'Yes',
+      odds: 1.68,
+      units: 2.0,
+      bookmaker: 'SportyBet',
+      modelProb: 0.684,
+    },
+    tailCount: 54,
+    fadeCount: 5,
+    commentsCount: 14,
+  },
+  {
+    id: 'post-5',
+    authorId: 'tipster-1',
+    authorName: 'Marcus Vance',
+    authorUsername: 'SharpShooter',
+    authorBadge: 'verified_sharp',
+    authorWinRate: 68.4,
+    authorRoi: 22.4,
+    createdAt: '3h ago',
+    type: 'news',
+    league: 'NBA',
+    title: '🚨 Injury Update: Draymond Green Upgraded to Play',
+    content:
+      'Warriors defensive efficiency rating improves by +6.2 points per 100 possessions when Green is on court. Expect Lakers paint scoring efficiency to decrease.',
+    newsCategory: 'injury',
+    isVip: false,
+    tailCount: 38,
+    fadeCount: 1,
+    commentsCount: 9,
+  },
+];
+
+// ========================================================
+// Deep Dive Selection Analytics Database
+// ========================================================
+
+export const MOCK_DEEP_ANALYTICS: Record<string, DeepAnalytics> = {
+  'pred-1': {
+    predictionId: 'pred-1',
+    convictionGrade: 'A+',
+    hitRateL10: { hits: 7, total: 10, pct: 70 },
+    l10Logs: [
+      { game: 'vs DEN', opponent: 'Nuggets', value: 32, line: 26.5, hit: true },
+      { game: '@ PHX', opponent: 'Suns', value: 28, line: 26.5, hit: true },
+      { game: '@ SAC', opponent: 'Kings', value: 24, line: 26.5, hit: false },
+      { game: 'vs DAL', opponent: 'Mavericks', value: 31, line: 26.5, hit: true },
+      { game: 'vs HOU', opponent: 'Rockets', value: 29, line: 26.5, hit: true },
+      { game: '@ UTA', opponent: 'Jazz', value: 27, line: 26.5, hit: true },
+      { game: '@ LAC', opponent: 'Clippers', value: 21, line: 26.5, hit: false },
+      { game: 'vs MEM', opponent: 'Grizzlies', value: 35, line: 26.5, hit: true },
+      { game: 'vs OKC', opponent: 'Thunder', value: 26, line: 26.5, hit: false },
+      { game: '@ POR', opponent: 'Blazers', value: 30, line: 26.5, hit: true },
+    ],
+    projectionCushion: 3.3,
+    keyDrivers: [
+      'Pace Surge: Projected 102.5 possessions (+4.3 vs league avg, generating ~6 additional shot attempts)',
+      'Defensive Vulnerability: Lakers rank #22 in league defending point guard 3-point pullups',
+      'Usage Rate Dominance: 31.8% usage rate in L5 games without Paul on court',
+      'True Fair Line: Pinnacle devigged fair odds at 1.72 vs DraftKings retail misprice at 1.95',
+    ],
+  },
+  'pred-2': {
+    predictionId: 'pred-2',
+    convictionGrade: 'A+',
+    hitRateL10: { hits: 8, total: 10, pct: 80 },
+    l10Logs: [
+      { game: 'vs MCI', opponent: 'Man City', value: 3.8, line: 2.5, hit: true },
+      { game: '@ NEW', opponent: 'Newcastle', value: 2.9, line: 2.5, hit: true },
+      { game: 'vs SHU', opponent: 'Sheffield', value: 4.1, line: 2.5, hit: true },
+      { game: '@ AVL', opponent: 'Aston Villa', value: 1.8, line: 2.5, hit: false },
+      { game: 'vs TOT', opponent: 'Tottenham', value: 3.5, line: 2.5, hit: true },
+      { game: '@ LIV', opponent: 'Liverpool', value: 3.2, line: 2.5, hit: true },
+      { game: 'vs WHU', opponent: 'West Ham', value: 2.7, line: 2.5, hit: true },
+      { game: '@ MUN', opponent: 'Man United', value: 3.0, line: 2.5, hit: true },
+      { game: 'vs BHA', opponent: 'Brighton', value: 1.9, line: 2.5, hit: false },
+      { game: '@ EVE', opponent: 'Everton', value: 3.1, line: 2.5, hit: true },
+    ],
+    projectionCushion: 0.65,
+    keyDrivers: [
+      'Bivariate Poisson Matrix: 61.0% joint probability for Over 2.5 goals',
+      'Combined xG Expectancy: 3.30 expected goals across both clubs (Arsenal 1.95 xG, Chelsea 1.35 xG)',
+      'Transition Tempo: Chelsea concede 2.1 big chances per away match',
+      'Model Edge: +16.5% mathematical EV against Bet365 1.91 price',
+    ],
+  },
+  'pred-3': {
+    predictionId: 'pred-3',
+    convictionGrade: 'A',
+    hitRateL10: { hits: 7, total: 10, pct: 70 },
+    l10Logs: [
+      { game: 'vs MIA', opponent: 'Heat', value: 31, line: 27.5, hit: true },
+      { game: '@ IND', opponent: 'Pacers', value: 34, line: 27.5, hit: true },
+      { game: 'vs MIL', opponent: 'Bucks', value: 25, line: 27.5, hit: false },
+      { game: 'vs PHI', opponent: '76ers', value: 29, line: 27.5, hit: true },
+      { game: '@ CLE', opponent: 'Cavaliers', value: 28, line: 27.5, hit: true },
+      { game: 'vs ORL', opponent: 'Magic', value: 23, line: 27.5, hit: false },
+      { game: '@ BKN', opponent: 'Nets', value: 32, line: 27.5, hit: true },
+      { game: 'vs CHI', opponent: 'Bulls', value: 33, line: 27.5, hit: true },
+      { game: '@ TOR', opponent: 'Raptors', value: 26, line: 27.5, hit: false },
+      { game: 'vs ATL', opponent: 'Hawks', value: 30, line: 27.5, hit: true },
+    ],
+    projectionCushion: 3.1,
+    keyDrivers: [
+      'Pace-Adjusted Baseline: 30.6 projected points against 27.5 line',
+      'Isolation Efficiency: 1.18 points per possession in Madison Square Garden matchups',
+      'Form Trend: L3 average of 31.3 points on 22.4 field goal attempts',
+      'True Fair Line: 1.68 zero-vig fair odds vs 1.92 Pinnacle line',
+    ],
+  },
+};
+
+export async function getTipsters(): Promise<TipsterProfile[]> {
+  return MOCK_TIPSTERS;
+}
+
+export async function getCommunityPosts(): Promise<CommunityPost[]> {
+  return MOCK_COMMUNITY_POSTS;
+}
+
+export function getDeepAnalytics(predictionId: string): DeepAnalytics {
+  if (MOCK_DEEP_ANALYTICS[predictionId]) {
+    return MOCK_DEEP_ANALYTICS[predictionId];
+  }
+  // Generic fallback for any other prediction
+  return {
+    predictionId,
+    convictionGrade: 'A',
+    hitRateL10: { hits: 6, total: 10, pct: 60 },
+    l10Logs: [
+      { game: 'L1', opponent: 'Opp 1', value: 28, line: 25.5, hit: true },
+      { game: 'L2', opponent: 'Opp 2', value: 24, line: 25.5, hit: false },
+      { game: 'L3', opponent: 'Opp 3', value: 27, line: 25.5, hit: true },
+      { game: 'L4', opponent: 'Opp 4', value: 29, line: 25.5, hit: true },
+      { game: 'L5', opponent: 'Opp 5', value: 23, line: 25.5, hit: false },
+      { game: 'L6', opponent: 'Opp 6', value: 31, line: 25.5, hit: true },
+      { game: 'L7', opponent: 'Opp 7', value: 26, line: 25.5, hit: true },
+      { game: 'L8', opponent: 'Opp 8', value: 22, line: 25.5, hit: false },
+      { game: 'L9', opponent: 'Opp 9', value: 28, line: 25.5, hit: true },
+      { game: 'L10', opponent: 'Opp 10', value: 21, line: 25.5, hit: false },
+    ],
+    projectionCushion: 2.1,
+    keyDrivers: [
+      'Model Edge: Positive expected value detected against bookmaker margin',
+      'Form Factor: Consistency in recent rolling slate performances',
+      'Vig Discrepancy: Retail odds are trading wider than market maker baseline',
+    ],
+  };
 }

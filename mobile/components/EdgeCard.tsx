@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Check, ChevronDown, ChevronUp, Lock, Plus } from 'lucide-react-native';
+import { BarChart2, Check, ChevronDown, ChevronUp, Lock, Plus } from 'lucide-react-native';
 import { Prediction } from '../lib/types';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
+import { DeepAnalyticsModal } from './DeepAnalyticsModal';
 import { Badge, Button, Card, MetricTile, ProbabilityBar, StatRow, Text } from './ui';
 import { EdgeScoreBadge } from './EdgeScoreBadge';
 
@@ -15,6 +16,7 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
   const { isPro, openPaywall, addLegToSlip, removeLegFromSlip, isLegInSlip } = useBetStore();
   const { tokens } = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const [analyticsVisible, setAnalyticsVisible] = useState(false);
 
   const isLocked = prediction.tier === 'pro' && !isPro;
   const inSlip = isLegInSlip(prediction.id);
@@ -222,16 +224,18 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
         </View>
       ) : null}
 
-      {/* Action Footer: Add to Bet Slip */}
+      {/* Action Footer: Add to Bet Slip & Deep Analytics */}
       <View style={[styles.cardFooter, { borderTopColor: tokens.colors.border }]}>
-        <View style={styles.footerNote}>
-          <Text variant="bodySm" tone="tertiary">
-            Baseline:{' '}
-            <Text variant="dataSm" tone="secondary">
-              Pinnacle Fair Line
-            </Text>
+        <TouchableOpacity
+          style={[styles.analyticsTriggerBtn, { borderColor: tokens.colors.border, backgroundColor: tokens.colors.surfaceInset }]}
+          onPress={() => setAnalyticsVisible(true)}
+          activeOpacity={0.7}
+        >
+          <BarChart2 size={14} color={tokens.colors.primary} />
+          <Text variant="badge" tone="brand">
+            Deep Analytics
           </Text>
-        </View>
+        </TouchableOpacity>
 
         <Button
           label={inSlip ? 'In Slip' : '+ Add to Slip'}
@@ -241,6 +245,13 @@ export function EdgeCard({ prediction }: EdgeCardProps) {
           style={styles.actionBtn}
         />
       </View>
+
+      {/* Deep Analytics Modal */}
+      <DeepAnalyticsModal
+        visible={analyticsVisible}
+        onClose={() => setAnalyticsVisible(false)}
+        prediction={prediction}
+      />
 
       {/* Pro Tier Lock Screen (if locked) */}
       {isLocked ? (
@@ -375,6 +386,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     borderTopWidth: 1,
+  },
+  analyticsTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   footerNote: {
     flex: 1,

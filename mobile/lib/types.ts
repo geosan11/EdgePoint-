@@ -167,3 +167,62 @@ export interface UserProfile {
   unitSize: number;
   currency: 'USD' | 'NGN';
 }
+
+export interface TipsterProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  badge: 'verified_sharp' | 'pro_capper' | 'algo_model';
+  bio: string;
+  specialty: string;
+  winRate: number;
+  roiPct: number;
+  unitsWon: number;
+  clvPct: number;
+  subscribersCount: number;
+  monthlyPriceUSD: number;
+  monthlyPriceNGN: number;
+  recentStreak: string;
+  isVerified: boolean;
+}
+
+export interface CommunityPost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorBadge: 'verified_sharp' | 'pro_capper' | 'algo_model';
+  authorWinRate: number;
+  authorRoi: number;
+  createdAt: string;
+  type: 'prediction' | 'news';
+  league: 'NBA' | 'Premier League';
+  title: string;
+  content: string;
+  isVip: boolean;
+  predictionData?: {
+    fixture: string;
+    prop: string;
+    selection: string;
+    line?: number;
+    odds: number;
+    units: number;
+    bookmaker: string;
+    modelProb?: number;
+  };
+  newsCategory?: 'injury' | 'line_move' | 'tactical';
+  tailCount: number;
+  fadeCount: number;
+  userReaction?: 'tail' | 'fade';
+  commentsCount: number;
+}
+
+export interface DeepAnalytics {
+  predictionId: string;
+  convictionGrade: 'A+' | 'A' | 'B+' | 'B';
+  hitRateL10: { hits: number; total: number; pct: number };
+  l10Logs: Array<{ game: string; opponent: string; value: number; line: number; hit: boolean }>;
+  projectionCushion: number;
+  keyDrivers: string[];
+}

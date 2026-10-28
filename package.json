@@ -1,0 +1,10 @@
+{
+  "name": "edgepoint-monorepo",
+  "version": "1.0.0",
+  "description": "EdgePoint+ Monorepo - Root build proxy for Vercel deployment",
+  "private": true,
+  "scripts": {
+    "build": "cd mobile && npm install && npm run build:web",
+    "start": "cd mobile && npm start"
+  }
+}

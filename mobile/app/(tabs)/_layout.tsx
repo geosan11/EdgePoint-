@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Tabs } from 'expo-router';
-import { BarChart3, Calendar, Compass, Layers, ShieldCheck, TrendingUp, User, Zap } from 'lucide-react-native';
+import { BarChart3, Calendar, Compass, Layers, ShieldCheck, TrendingUp, User, Users, Zap } from 'lucide-react-native';
 import { useBetStore } from '../../stores/useBetStore';
 import { useTheme } from '../../stores/useThemeStore';
 
@@ -80,12 +80,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. Insights */}
+      {/* 4. Community & Feed */}
       <Tabs.Screen
         name="insights"
         options={{
-          title: 'Insights',
-          tabBarIcon: ({ color, size }) => <BarChart3 size={19} color={color} />,
+          title: 'Community',
+          tabBarIcon: ({ color, size }) => <Users size={19} color={color} />,
         }}
       />
 

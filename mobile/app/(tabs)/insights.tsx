@@ -1,18 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ArrowUpRight, BarChart3, Calculator, Info, Radio, Zap } from 'lucide-react-native';
+import {
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  ArrowUpRight,
+  BarChart3,
+  Flame,
+  MessageSquare,
+  PenSquare,
+  Radio,
+  Sparkles,
+  Users,
+  Zap,
+} from 'lucide-react-native';
+import { CommunityFeedCard } from '../../components/CommunityFeedCard';
+import { CreatePostModal } from '../../components/CreatePostModal';
 import { DevigCalculator } from '../../components/DevigCalculator';
 import { SteamCard } from '../../components/SteamCard';
-import { Badge, Card, MetricTile, Text } from '../../components/ui';
+import { TipsterCard } from '../../components/TipsterCard';
+import { Badge, Button, Card, Text } from '../../components/ui';
 import { getInsights, getLineMovements } from '../../lib/supabase';
-import { LeagueTrendInsight, LineMovement, Sport } from '../../lib/types';
+import { LeagueTrendInsight, LineMovement } from '../../lib/types';
+import { useCommunityStore } from '../../stores/useCommunityStore';
 import { useTheme } from '../../stores/useThemeStore';
 
-type InsightView = 'all' | 'nba' | 'epl' | 'steam' | 'devig';
+type CommunityView = 'feed' | 'tipsters' | 'steam' | 'devig' | 'trends';
+type FeedFilter = 'all' | 'predictions' | 'news' | 'subscribed';
 
 export default function InsightsScreen() {
   const { tokens } = useTheme();
-  const [activeView, setActiveView] = useState<InsightView>('all');
+  const [activeView, setActiveView] = useState<CommunityView>('feed');
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
+  const [trendLeagueFilter, setTrendLeagueFilter] = useState<'all' | 'nba' | 'epl'>('all');
+  const [createPostVisible, setCreatePostVisible] = useState(false);
+
+  const { posts, tipsters, subscribedTipsterIds } = useCommunityStore();
   const [insights, setInsights] = useState<LeagueTrendInsight[]>([]);
   const [movements, setMovements] = useState<LineMovement[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,24 +60,39 @@ export default function InsightsScreen() {
     setRefreshing(false);
   };
 
-  const filteredInsights = insights.filter((i) => {
-    if (activeView === 'all') return true;
-    if (activeView === 'nba') return i.league === 'NBA';
-    if (activeView === 'epl') return i.league === 'Premier League';
+  const filteredPosts = posts.filter((p) => {
+    if (feedFilter === 'all') return true;
+    if (feedFilter === 'predictions') return p.type === 'prediction';
+    if (feedFilter === 'news') return p.type === 'news';
+    if (feedFilter === 'subscribed') return subscribedTipsterIds.includes(p.authorId);
     return true;
   });
 
-  const viewOptions: { label: string; value: InsightView }[] = [
-    { label: 'All Trends', value: 'all' },
-    { label: 'NBA Analytics 🏀', value: 'nba' },
-    { label: 'EPL Analytics ⚽', value: 'epl' },
+  const filteredInsights = insights.filter((i) => {
+    if (trendLeagueFilter === 'all') return true;
+    if (trendLeagueFilter === 'nba') return i.league === 'NBA';
+    if (trendLeagueFilter === 'epl') return i.league === 'Premier League';
+    return true;
+  });
+
+  const viewOptions: { label: string; value: CommunityView }[] = [
+    { label: 'Sharp Feed 💬', value: 'feed' },
+    { label: 'Top Tipsters 👑', value: 'tipsters' },
     { label: 'Sharp Steam Radar ⚡', value: 'steam' },
     { label: 'Devig Calculator 🧮', value: 'devig' },
+    { label: 'League Trends 📊', value: 'trends' },
+  ];
+
+  const feedFilterOptions: { label: string; value: FeedFilter }[] = [
+    { label: 'All Activity', value: 'all' },
+    { label: 'Picks 🎯', value: 'predictions' },
+    { label: 'News & Intel 📰', value: 'news' },
+    { label: `Subscribed (${subscribedTipsterIds.length}) 👑`, value: 'subscribed' },
   ];
 
   return (
     <View style={[styles.screen, { backgroundColor: tokens.colors.background }]}>
-      {/* Top Filter Chips */}
+      {/* 1. Top Primary Section Tabs */}
       <View style={[styles.navBar, { borderBottomColor: tokens.colors.border }]}>
         <ScrollView
           horizontal
@@ -81,12 +123,130 @@ export default function InsightsScreen() {
         </ScrollView>
       </View>
 
-      {/* Main View: Devig Calculator OR Steam Radar OR League Trends */}
-      {activeView === 'devig' ? (
-        <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
-          <DevigCalculator />
-        </ScrollView>
-      ) : activeView === 'steam' ? (
+      {/* 2. COMMUNITY FEED VIEW */}
+      {activeView === 'feed' ? (
+        <FlatList
+          data={filteredPosts}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <View style={styles.feedHeaderWrap}>
+              {/* Post Action Banner */}
+              <View style={[styles.actionBanner, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Sparkles size={14} color={tokens.colors.primary} />
+                    <Text variant="title">Sharp Community Intel</Text>
+                  </View>
+                  <Text variant="bodySm" tone="secondary">
+                    Publish your quantitative pick or breaking sports news.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.postButton, { backgroundColor: tokens.colors.primary }]}
+                  onPress={() => setCreatePostVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <PenSquare size={13} color={tokens.colors.onPrimary} />
+                  <Text variant="badge" style={{ color: tokens.colors.onPrimary }}>
+                    + Post
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Feed Sub-filters */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.subFilterScroll}
+              >
+                {feedFilterOptions.map((f) => {
+                  const active = feedFilter === f.value;
+                  return (
+                    <TouchableOpacity
+                      key={f.value}
+                      style={[
+                        styles.subFilterChip,
+                        {
+                          backgroundColor: active ? tokens.colors.primarySoft : tokens.colors.surface,
+                          borderColor: active ? tokens.colors.primary : tokens.colors.border,
+                        },
+                      ]}
+                      onPress={() => setFeedFilter(f.value)}
+                      activeOpacity={0.7}
+                    >
+                      <Text variant="label" tone={active ? 'brand' : 'secondary'}>
+                        {f.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
+          renderItem={({ item }) => <CommunityFeedCard post={item} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MessageSquare size={32} color={tokens.colors.borderStrong} />
+              <Text variant="title" tone="secondary" style={{ marginTop: 10, marginBottom: 4 }}>
+                No Posts in This Category
+              </Text>
+              <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 12 }}>
+                {feedFilter === 'subscribed'
+                  ? "You haven't subscribed to any tipsters yet. Browse the Top Tipsters tab to subscribe."
+                  : 'Be the first sharp analyst to publish a pick or intel.'}
+              </Text>
+              {feedFilter === 'subscribed' ? (
+                <TouchableOpacity
+                  style={[styles.emptyResetBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
+                  onPress={() => setActiveView('tipsters')}
+                  activeOpacity={0.7}
+                >
+                  <Text variant="badge" tone="brand">
+                    Browse Top Tipsters
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.emptyResetBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
+                  onPress={() => setFeedFilter('all')}
+                  activeOpacity={0.7}
+                >
+                  <Text variant="badge" tone="brand">
+                    View All Posts
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          }
+          contentContainerStyle={styles.listPadding}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : null}
+
+      {/* 3. TOP TIPSTERS MARKETPLACE VIEW */}
+      {activeView === 'tipsters' ? (
+        <FlatList
+          data={tipsters}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <View style={styles.tipstersHeader}>
+              <View style={styles.tipstersTitleRow}>
+                <Users size={16} color={tokens.colors.primary} />
+                <Text variant="headlineSm">Verified Sharp Leaderboard</Text>
+              </View>
+              <Text variant="bodySm" tone="secondary">
+                Audited win rates, 30-day ROI, and closing line value (CLV). Subscribe to receive locked VIP predictions.
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => <TipsterCard tipster={item} />}
+          contentContainerStyle={styles.listPadding}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : null}
+
+      {/* 4. SHARP STEAM RADAR VIEW */}
+      {activeView === 'steam' ? (
         <FlatList
           data={movements}
           keyExtractor={(item) => item.id}
@@ -115,7 +275,17 @@ export default function InsightsScreen() {
           contentContainerStyle={styles.listPadding}
           showsVerticalScrollIndicator={false}
         />
-      ) : (
+      ) : null}
+
+      {/* 5. DEVIG CALCULATOR VIEW */}
+      {activeView === 'devig' ? (
+        <ScrollView contentContainerStyle={styles.scrollPadding} showsVerticalScrollIndicator={false}>
+          <DevigCalculator />
+        </ScrollView>
+      ) : null}
+
+      {/* 6. LEAGUE TRENDS VIEW */}
+      {activeView === 'trends' ? (
         <FlatList
           data={filteredInsights}
           keyExtractor={(item) => item.id}
@@ -125,6 +295,28 @@ export default function InsightsScreen() {
               <Text variant="bodySm" tone="secondary">
                 High-confidence empirical patterns filtered by pace, xG, and defensive efficiency splits.
               </Text>
+              <View style={styles.trendFilterRow}>
+                {[
+                  { label: 'All', value: 'all' as const },
+                  { label: 'NBA 🏀', value: 'nba' as const },
+                  { label: 'Premier League ⚽', value: 'epl' as const },
+                ].map((t) => (
+                  <TouchableOpacity
+                    key={t.value}
+                    style={[
+                      styles.subFilterChip,
+                      trendLeagueFilter === t.value && { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
+                      { borderColor: tokens.colors.border },
+                    ]}
+                    onPress={() => setTrendLeagueFilter(t.value)}
+                    activeOpacity={0.7}
+                  >
+                    <Text variant="label" tone={trendLeagueFilter === t.value ? 'brand' : 'secondary'}>
+                      {t.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           }
           renderItem={({ item }) => (
@@ -162,38 +354,13 @@ export default function InsightsScreen() {
               </View>
             </Card>
           )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <BarChart3 size={32} color={tokens.colors.borderStrong} />
-              <Text variant="title" tone="secondary" style={{ marginTop: 10, marginBottom: 4 }}>
-                No Trend Profiles Found
-              </Text>
-              <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center', marginBottom: 12 }}>
-                No statistical profiles recorded for this category.
-              </Text>
-              <TouchableOpacity
-                style={[styles.emptyResetBtn, { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary }]}
-                onPress={() => setActiveView('all')}
-                activeOpacity={0.7}
-              >
-                <Text variant="badge" tone="brand">
-                  View All Trends
-                </Text>
-              </TouchableOpacity>
-            </View>
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={tokens.colors.primary}
-              colors={[tokens.colors.primary]}
-            />
-          }
           contentContainerStyle={styles.listPadding}
           showsVerticalScrollIndicator={false}
         />
-      )}
+      ) : null}
+
+      {/* Create Post Modal */}
+      <CreatePostModal visible={createPostVisible} onClose={() => setCreatePostVisible(false)} />
     </View>
   );
 }
@@ -219,6 +386,49 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 12,
   },
+  feedHeaderWrap: {
+    paddingTop: 10,
+    paddingBottom: 4,
+    gap: 10,
+  },
+  actionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  postButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  subFilterScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  subFilterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  tipstersHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 4,
+  },
+  tipstersTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   radarHeader: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -234,7 +444,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 10,
-    gap: 4,
+    gap: 8,
+  },
+  trendFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
   },
   insightCard: {
     marginHorizontal: 16,
