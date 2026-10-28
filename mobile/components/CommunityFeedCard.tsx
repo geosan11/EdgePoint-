@@ -57,7 +57,7 @@ export function CommunityFeedCard({ post }: CommunityFeedCardProps) {
       ev: '+EV Syndicate',
       bookmaker: post.predictionData.bookmaker,
     });
-    Alert.alert('Pick Added', `Tailed @${post.authorUsername}'s pick to your betslip.`);
+    Alert.alert('Added to Watchlist', `Added @${post.authorUsername}'s pick to your watchlist.`);
   };
 
   const handleSubscribe = () => {

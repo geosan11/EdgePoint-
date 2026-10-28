@@ -264,7 +264,7 @@ export function DeepAnalyticsModal({ visible, onClose, prediction }: DeepAnalyti
           {/* Action Footer */}
           <View style={[styles.footer, { borderTopColor: tokens.colors.border }]}>
             <Button
-              label={inSlip ? 'In Betslip ✓' : '+ Tail Pick to Betslip'}
+              label={inSlip ? 'On Watchlist ✓' : '+ Add to Watchlist'}
               variant={inSlip ? 'primary' : 'primary'}
               icon={inSlip ? <Check size={16} color={tokens.colors.onPrimary} /> : <Plus size={16} color={tokens.colors.onPrimary} />}
               onPress={toggleSlip}
