@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   CommunityPost,
   CuratedParlay,
@@ -7,6 +8,7 @@ import {
   LineMovement,
   MatchFixture,
   Prediction,
+  RecordPick,
   Sport,
   TipsterProfile,
 } from './types';
@@ -850,4 +852,406 @@ export function getDeepAnalytics(predictionId: string): DeepAnalytics {
       'Vig Discrepancy: Retail odds are trading wider than market maker baseline',
     ],
   };
+}
+
+// ========================================================
+// Audited Track Record Mock Data & Supabase Query
+// ========================================================
+
+export const MOCK_PICK_RECORD: RecordPick[] = [
+  // 3 Pending picks for upcoming slates
+  {
+    id: 'rec-001',
+    selection: 'Lakers -3.5 vs Warriors',
+    market: 'Spread',
+    league: 'NBA',
+    posted_at: '2026-10-28T09:30:00Z',
+    posted_odds: 1.91,
+    closing_odds: 1.84,
+    model_probability: 0.584,
+    result: 'pending',
+  },
+  {
+    id: 'rec-002',
+    selection: 'Stephen Curry Over 26.5 PTS',
+    market: 'Player Points',
+    league: 'NBA',
+    posted_at: '2026-10-28T08:15:00Z',
+    posted_odds: 1.95,
+    closing_odds: 1.90,
+    model_probability: 0.572,
+    result: 'pending',
+  },
+  {
+    id: 'rec-003',
+    selection: 'Arsenal vs Chelsea Over 2.5 Goals',
+    market: 'Match Total',
+    league: 'Premier League',
+    posted_at: '2026-10-28T07:45:00Z',
+    posted_odds: 1.91,
+    closing_odds: 1.87,
+    model_probability: 0.612,
+    result: 'pending',
+  },
+  // Settled picks (Recent 30 days)
+  {
+    id: 'rec-004',
+    selection: 'Celtics -4.5 @ Knicks',
+    market: 'Spread',
+    league: 'NBA',
+    posted_at: '2026-10-27T18:00:00Z',
+    posted_odds: 1.95,
+    closing_odds: 1.86,
+    model_probability: 0.565,
+    result: 'won',
+  },
+  {
+    id: 'rec-005',
+    selection: 'Nikola Jokic Over 9.5 Assists',
+    market: 'Player Assists',
+    league: 'NBA',
+    posted_at: '2026-10-26T21:10:00Z',
+    posted_odds: 1.92,
+    closing_odds: 1.80,
+    model_probability: 0.591,
+    result: 'won',
+  },
+  {
+    id: 'rec-006',
+    selection: 'Aston Villa ML vs Bournemouth',
+    market: 'Moneyline',
+    league: 'Premier League',
+    posted_at: '2026-10-26T13:45:00Z',
+    posted_odds: 1.88,
+    closing_odds: 1.82,
+    model_probability: 0.579,
+    result: 'won',
+  },
+  {
+    id: 'rec-007',
+    selection: 'Bucks vs 76ers Under 224.5',
+    market: 'Match Total',
+    league: 'NBA',
+    posted_at: '2026-10-25T17:30:00Z',
+    posted_odds: 1.91,
+    closing_odds: 1.94,
+    model_probability: 0.548,
+    result: 'lost',
+  },
+  {
+    id: 'rec-008',
+    selection: 'Erling Haaland Over 3.5 Shots on Target',
+    market: 'Shots on Target',
+    league: 'Premier League',
+    posted_at: '2026-10-24T11:00:00Z',
+    posted_odds: 2.10,
+    closing_odds: 1.92,
+    model_probability: 0.535,
+    result: 'won',
+  },
+  {
+    id: 'rec-009',
+    selection: 'Luka Doncic Over 8.5 Rebounds',
+    market: 'Player Rebounds',
+    league: 'NBA',
+    posted_at: '2026-10-23T20:15:00Z',
+    posted_odds: 1.90,
+    closing_odds: 1.82,
+    model_probability: 0.580,
+    result: 'won',
+  },
+  {
+    id: 'rec-010',
+    selection: 'Newcastle vs Brighton Both Teams To Score',
+    market: 'BTTS',
+    league: 'Premier League',
+    posted_at: '2026-10-22T14:30:00Z',
+    posted_odds: 1.80,
+    closing_odds: 1.74,
+    model_probability: 0.605,
+    result: 'won',
+  },
+  {
+    id: 'rec-011',
+    selection: 'Timberwolves -2.5 @ Nuggets',
+    market: 'Spread',
+    league: 'NBA',
+    posted_at: '2026-10-21T19:00:00Z',
+    posted_odds: 1.93,
+    closing_odds: 1.98,
+    model_probability: 0.539,
+    result: 'lost',
+  },
+  {
+    id: 'rec-012',
+    selection: 'Man City -1.5 vs Southampton',
+    market: 'Spread',
+    league: 'Premier League',
+    posted_at: '2026-10-19T14:00:00Z',
+    posted_odds: 1.85,
+    closing_odds: 1.76,
+    model_probability: 0.615,
+    result: 'won',
+  },
+  {
+    id: 'rec-013',
+    selection: 'Tyrese Haliburton Over 10.5 Assists',
+    market: 'Player Assists',
+    league: 'NBA',
+    posted_at: '2026-10-18T18:45:00Z',
+    posted_odds: 1.96,
+    closing_odds: 1.88,
+    model_probability: 0.558,
+    result: 'won',
+  },
+  {
+    id: 'rec-014',
+    selection: 'Tottenham ML vs West Ham',
+    market: 'Moneyline',
+    league: 'Premier League',
+    posted_at: '2026-10-16T12:00:00Z',
+    posted_odds: 1.78,
+    closing_odds: 1.72,
+    model_probability: 0.620,
+    result: 'won',
+  },
+  {
+    id: 'rec-015',
+    selection: 'Suns vs Clippers Over 221.5',
+    market: 'Match Total',
+    league: 'NBA',
+    posted_at: '2026-10-15T21:00:00Z',
+    posted_odds: 1.91,
+    closing_odds: 1.85,
+    model_probability: 0.562,
+    result: 'lost',
+  },
+  {
+    id: 'rec-016',
+    selection: 'Mohamed Salah Over 2.5 Shots',
+    market: 'Shots on Target',
+    league: 'Premier League',
+    posted_at: '2026-10-13T15:30:00Z',
+    posted_odds: 1.87,
+    closing_odds: 1.79,
+    model_probability: 0.582,
+    result: 'won',
+  },
+  {
+    id: 'rec-017',
+    selection: 'Shai Gilgeous-Alexander Over 31.5 PTS',
+    market: 'Player Points',
+    league: 'NBA',
+    posted_at: '2026-10-11T19:30:00Z',
+    posted_odds: 1.92,
+    closing_odds: 1.95,
+    model_probability: 0.542,
+    result: 'won',
+  },
+  {
+    id: 'rec-018',
+    selection: 'Liverpool vs Chelsea Both Teams To Score',
+    market: 'BTTS',
+    league: 'Premier League',
+    posted_at: '2026-10-09T16:00:00Z',
+    posted_odds: 1.83,
+    closing_odds: 1.75,
+    model_probability: 0.598,
+    result: 'won',
+  },
+  {
+    id: 'rec-019',
+    selection: 'Heat +4.5 @ Magic',
+    market: 'Spread',
+    league: 'NBA',
+    posted_at: '2026-10-06T18:30:00Z',
+    posted_odds: 1.94,
+    closing_odds: 1.90,
+    model_probability: 0.551,
+    result: 'lost',
+  },
+  {
+    id: 'rec-020',
+    selection: 'Bukayo Saka Over 0.5 Assists',
+    market: 'Player Assists',
+    league: 'Premier League',
+    posted_at: '2026-10-03T14:15:00Z',
+    posted_odds: 2.25,
+    closing_odds: 2.05,
+    model_probability: 0.495,
+    result: 'won',
+  },
+  // Settled picks (30-90 days)
+  {
+    id: 'rec-021',
+    selection: 'Arsenal -1.0 vs Leicester',
+    market: 'Spread',
+    league: 'Premier League',
+    posted_at: '2026-09-28T14:00:00Z',
+    posted_odds: 1.85,
+    closing_odds: 1.77,
+    model_probability: 0.608,
+    result: 'won',
+  },
+  {
+    id: 'rec-022',
+    selection: 'Man United vs Spurs Over 2.5 Goals',
+    market: 'Match Total',
+    league: 'Premier League',
+    posted_at: '2026-09-24T15:30:00Z',
+    posted_odds: 1.90,
+    closing_odds: 1.82,
+    model_probability: 0.574,
+    result: 'won',
+  },
+  {
+    id: 'rec-023',
+    selection: 'Chelsea ML @ West Ham',
+    market: 'Moneyline',
+    league: 'Premier League',
+    posted_at: '2026-09-21T11:30:00Z',
+    posted_odds: 2.05,
+    closing_odds: 1.95,
+    model_probability: 0.540,
+    result: 'won',
+  },
+  {
+    id: 'rec-024',
+    selection: 'Aston Villa vs Wolves BTTS',
+    market: 'BTTS',
+    league: 'Premier League',
+    posted_at: '2026-09-17T14:00:00Z',
+    posted_odds: 1.88,
+    closing_odds: 1.92,
+    model_probability: 0.555,
+    result: 'lost',
+  },
+  {
+    id: 'rec-025',
+    selection: 'Man City vs Brentford Over 3.5 Goals',
+    market: 'Match Total',
+    league: 'Premier League',
+    posted_at: '2026-09-14T14:00:00Z',
+    posted_odds: 2.15,
+    closing_odds: 2.02,
+    model_probability: 0.518,
+    result: 'lost',
+  },
+  {
+    id: 'rec-026',
+    selection: 'Liverpool -1.5 @ Man United',
+    market: 'Spread',
+    league: 'Premier League',
+    posted_at: '2026-09-08T15:00:00Z',
+    posted_odds: 2.20,
+    closing_odds: 2.08,
+    model_probability: 0.525,
+    result: 'won',
+  },
+  {
+    id: 'rec-027',
+    selection: 'Brighton ML vs Everton',
+    market: 'Moneyline',
+    league: 'Premier League',
+    posted_at: '2026-09-02T14:00:00Z',
+    posted_odds: 1.84,
+    closing_odds: 1.76,
+    model_probability: 0.592,
+    result: 'won',
+  },
+  {
+    id: 'rec-028',
+    selection: 'Arsenal Clean Sheet Yes',
+    market: 'Clean Sheet',
+    league: 'Premier League',
+    posted_at: '2026-08-25T16:30:00Z',
+    posted_odds: 2.00,
+    closing_odds: 1.88,
+    model_probability: 0.550,
+    result: 'won',
+  },
+  {
+    id: 'rec-029',
+    selection: 'Chelsea vs Man City Both Teams To Score',
+    market: 'BTTS',
+    league: 'Premier League',
+    posted_at: '2026-08-18T15:30:00Z',
+    posted_odds: 1.75,
+    closing_odds: 1.79,
+    model_probability: 0.610,
+    result: 'lost',
+  },
+  {
+    id: 'rec-030',
+    selection: 'Tottenham @ Leicester Over 2.5 Goals',
+    market: 'Match Total',
+    league: 'Premier League',
+    posted_at: '2026-08-12T19:00:00Z',
+    posted_odds: 1.82,
+    closing_odds: 1.74,
+    model_probability: 0.595,
+    result: 'won',
+  },
+];
+
+export interface TrackRecordResponse {
+  picks: RecordPick[];
+  isMock: boolean;
+}
+
+export async function getTrackRecord(): Promise<TrackRecordResponse> {
+  try {
+    const { data, error } = await supabase
+      .from('pick_record')
+      .select('*')
+      .order('posted_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      return { picks: MOCK_PICK_RECORD, isMock: true };
+    }
+
+    return { picks: data as RecordPick[], isMock: false };
+  } catch {
+    return { picks: MOCK_PICK_RECORD, isMock: true };
+  }
+}
+
+/**
+ * Early Access Waitlist submission.
+ * Saves to Supabase 'waitlist' table with graceful fallback to local storage.
+ */
+export async function joinWaitlist(email: string): Promise<{ success: boolean; error?: string }> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    return { success: false, error: 'Please enter a valid email address.' };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('waitlist')
+      .insert({ email: cleanEmail, source: 'paywall_modal' });
+
+    if (error) {
+      // Offline or table not migrated yet: save locally
+      await saveWaitlistLocal(cleanEmail);
+    }
+    return { success: true };
+  } catch {
+    await saveWaitlistLocal(cleanEmail);
+    return { success: true };
+  }
+}
+
+async function saveWaitlistLocal(email: string): Promise<void> {
+  try {
+    const key = 'edgepoint_local_waitlist';
+    const raw = await AsyncStorage.getItem(key);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    if (!list.includes(email)) {
+      list.push(email);
+      await AsyncStorage.setItem(key, JSON.stringify(list));
+    }
+  } catch {
+    // silently catch local storage errors
+  }
 }

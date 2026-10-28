@@ -1,89 +1,77 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Tabs } from 'expo-router';
-import { BarChart3, Calendar, Compass, Layers, ShieldCheck, TrendingUp, User, Users, Zap } from 'lucide-react-native';
+import { BarChart3, Layers, TrendingUp, User } from 'lucide-react-native';
 import { useBetStore } from '../../stores/useBetStore';
 import { useTheme } from '../../stores/useThemeStore';
 
 export default function TabLayout() {
   const { tokens } = useTheme();
-  const { slipLegs, trackerBets } = useBetStore();
-
-  const activeBetsCount = trackerBets.filter((b) => b.result === 'pending').length;
+  const { slipLegs } = useBetStore();
 
   return (
     <Tabs
+      initialRouteName="edges"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#080A0E',
-          borderTopColor: '#1E222B',
+          position: 'absolute',
+          bottom: Platform.select({ ios: 24, default: 16 }),
+          left: 20,
+          right: 20,
+          height: 62,
+          borderRadius: 31,
+          backgroundColor: tokens.colors.surface, // #0F1116
+          borderWidth: 1,
+          borderColor: tokens.colors.border, // #1E222B
           borderTopWidth: 1,
-          height: Platform.select({ ios: 84, default: 66 }),
-          paddingBottom: Platform.select({ ios: 24, default: 8 }),
-          paddingTop: 8,
-          elevation: 10,
+          borderTopColor: tokens.colors.border,
+          paddingBottom: 7,
+          paddingTop: 7,
+          paddingHorizontal: 8,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.5,
+          shadowRadius: 16,
+          elevation: 16,
         },
-        tabBarActiveTintColor: tokens.colors.primary, // #00E599 Electric Emerald
+        tabBarActiveTintColor: tokens.colors.primary, // #00E599
         tabBarInactiveTintColor: tokens.colors.textTertiary,
         tabBarLabelStyle: {
-          fontWeight: '700',
+          fontWeight: '600',
           fontSize: 10,
-          letterSpacing: 0.4,
           marginTop: 2,
+        },
+        tabBarItemStyle: {
+          borderRadius: 24,
+          marginHorizontal: 2,
         },
       }}
     >
-      {/* 1. Fixtures */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'FIXTURES',
-          tabBarBadge: 2,
-          tabBarBadgeStyle: {
-            backgroundColor: tokens.colors.primary,
-            color: tokens.colors.onPrimary,
-            fontSize: 9,
-            fontWeight: '800',
-            fontVariant: ['tabular-nums'],
-            height: 16,
-            minWidth: 16,
-            lineHeight: 16,
-          },
-          tabBarIcon: ({ color, size, focused }) => (
-            <Calendar size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
-          ),
-        }}
-      />
-
-      {/* 2. Edges */}
+      {/* 1. Picks (current edges screen) */}
       <Tabs.Screen
         name="edges"
         options={{
-          title: '+EV EDGES',
-          tabBarBadge: 6,
-          tabBarBadgeStyle: {
-            backgroundColor: tokens.colors.primary,
-            color: tokens.colors.onPrimary,
-            fontSize: 9,
-            fontWeight: '800',
-            fontVariant: ['tabular-nums'],
-            height: 16,
-            minWidth: 16,
-            lineHeight: 16,
-          },
-          tabBarIcon: ({ color, size, focused }) => (
-            <TrendingUp size={19} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          title: 'Picks',
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={[
+                styles.iconPill,
+                focused && { backgroundColor: tokens.colors.primarySoft },
+              ]}
+            >
+              <TrendingUp size={20} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+            </View>
           ),
         }}
       />
 
-      {/* 3. Tracker */}
+      {/* 2. Watchlist (current tracker screen) */}
       <Tabs.Screen
         name="tracker"
         options={{
-          title: 'TRACKER',
-          tabBarBadge: slipLegs.length > 0 ? slipLegs.length : activeBetsCount > 0 ? activeBetsCount : undefined,
+          title: 'Watchlist',
+          tabBarBadge: slipLegs.length > 0 ? slipLegs.length : undefined,
           tabBarBadgeStyle: {
             backgroundColor: tokens.colors.primary,
             color: tokens.colors.onPrimary,
@@ -93,36 +81,70 @@ export default function TabLayout() {
             height: 16,
             minWidth: 16,
             lineHeight: 16,
+            top: 2,
           },
-          tabBarIcon: ({ color, size, focused }) => (
-            <Layers size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={[
+                styles.iconPill,
+                focused && { backgroundColor: tokens.colors.primarySoft },
+              ]}
+            >
+              <Layers size={20} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+            </View>
           ),
         }}
       />
 
-      {/* 4. Community & Feed */}
+      {/* 3. Record (new track record screen) */}
       <Tabs.Screen
-        name="insights"
+        name="record"
         options={{
-          title: 'SYNDICATE',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Users size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          title: 'Record',
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={[
+                styles.iconPill,
+                focused && { backgroundColor: tokens.colors.primarySoft },
+              ]}
+            >
+              <BarChart3 size={20} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+            </View>
           ),
         }}
       />
 
-      {/* 5. Profile */}
+      {/* 4. Account (current profile screen) */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'TERMINAL',
-          tabBarIcon: ({ color, size, focused }) => (
-            <User size={19} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+          title: 'Account',
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={[
+                styles.iconPill,
+                focused && { backgroundColor: tokens.colors.primarySoft },
+              ]}
+            >
+              <User size={20} color={color} strokeWidth={focused ? 2.4 : 1.8} />
+            </View>
           ),
         }}
       />
 
-      {/* Legacy hidden screens */}
+      {/* Hidden routes (files preserved) */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="parlay"
         options={{
@@ -138,3 +160,13 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 3,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

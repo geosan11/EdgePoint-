@@ -496,6 +496,13 @@ export default function TrackerScreen() {
           {dailySlip ? <DailySlipCard parlay={dailySlip} /> : null}
         </View>
       ) : null}
+
+      {/* Footer Disclaimer */}
+      <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+        <Text variant="bodySm" tone="tertiary" style={{ textAlign: 'center' }}>
+          Analysis, not betting advice. Edges can lose.
+        </Text>
+      </View>
     </ScrollView>
   );
 }
