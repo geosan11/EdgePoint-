@@ -41,16 +41,26 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     gameClock: 'Q3 5:12',
     commenceTime: 'Tonight, 10:30 PM ET',
     stadium: 'Crypto.com Arena',
+    dataSource: 'sample',
     markets: {
       spread: { line: -3.5, homeOdds: 1.91, awayOdds: 1.95, bestBook: 'Pinnacle' },
       total: { line: 226.5, overOdds: 1.93, underOdds: 1.93, bestBook: 'DraftKings' },
       moneyline: { home: 1.67, away: 2.25, bestBook: 'Bet365' },
+    },
+    bookOdds: {
+      sportybet: {
+        spread: { line: -3.5, homeOdds: 1.91, awayOdds: 1.95 },
+        total: { line: 226.5, overOdds: 1.93, underOdds: 1.93 },
+        moneyline: { home: 1.67, away: 2.25 },
+      },
     },
     modelEdge: {
       market: 'Total',
       pick: 'Over 226.5',
       edgePct: 5.4,
       modelProb: 0.548,
+      marketKey: 'total',
+      side: 'over',
     },
   },
   {
@@ -65,15 +75,24 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     gameClock: "72'",
     commenceTime: 'Today, 12:30 PM ET',
     stadium: 'Emirates Stadium',
+    dataSource: 'sample',
     markets: {
       total: { line: 2.5, overOdds: 1.91, underOdds: 1.95, bestBook: 'Bet365' },
       moneyline: { home: 1.85, away: 4.20, draw: 3.75, bestBook: 'SportyBet' },
+    },
+    bookOdds: {
+      sportybet: {
+        total: { line: 2.5, overOdds: 1.91, underOdds: 1.95 },
+        moneyline: { home: 1.85, away: 4.20, draw: 3.75 },
+      },
     },
     modelEdge: {
       market: 'Total',
       pick: 'Over 2.5',
       edgePct: 7.2,
       modelProb: 0.612,
+      marketKey: 'total',
+      side: 'over',
     },
   },
   {
@@ -85,16 +104,26 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     status: 'upcoming',
     commenceTime: 'Tonight, 7:30 PM ET',
     stadium: 'Madison Square Garden',
+    dataSource: 'sample',
     markets: {
       spread: { line: -4.5, homeOdds: 1.95, awayOdds: 1.91, bestBook: 'Pinnacle' },
       total: { line: 221.0, overOdds: 1.90, underOdds: 1.96, bestBook: 'FanDuel' },
       moneyline: { home: 2.45, away: 1.58, bestBook: 'SportyBet' },
+    },
+    bookOdds: {
+      sportybet: {
+        spread: { line: -4.5, homeOdds: 1.95, awayOdds: 1.91 },
+        total: { line: 221.0, overOdds: 1.90, underOdds: 1.96 },
+        moneyline: { home: 2.45, away: 1.58 },
+      },
     },
     modelEdge: {
       market: 'Spread',
       pick: 'Celtics -4.5',
       edgePct: 4.8,
       modelProb: 0.551,
+      marketKey: 'spread',
+      side: 'away',
     },
   },
   {
@@ -106,9 +135,16 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     status: 'upcoming',
     commenceTime: 'Tomorrow, 11:30 AM ET',
     stadium: 'Etihad Stadium',
+    dataSource: 'sample',
     markets: {
       total: { line: 3.0, overOdds: 1.88, underOdds: 2.02, bestBook: 'Pinnacle' },
       moneyline: { home: 2.05, away: 3.40, draw: 3.80, bestBook: 'Bet365' },
+    },
+    bookOdds: {
+      sportybet: {
+        total: { line: 3.0, overOdds: 1.88, underOdds: 2.02 },
+        moneyline: { home: 2.05, away: 3.40, draw: 3.80 },
+      },
     },
     modelEdge: {
       market: 'BTTS',
@@ -126,16 +162,26 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     status: 'upcoming',
     commenceTime: 'Tomorrow, 9:00 PM ET',
     stadium: 'Paycom Center',
+    dataSource: 'sample',
     markets: {
       spread: { line: -2.5, homeOdds: 1.91, awayOdds: 1.95, bestBook: 'Pinnacle' },
       total: { line: 228.5, overOdds: 1.95, underOdds: 1.91, bestBook: 'DraftKings' },
       moneyline: { home: 1.78, away: 2.10, bestBook: 'SportyBet' },
+    },
+    bookOdds: {
+      sportybet: {
+        spread: { line: -2.5, homeOdds: 1.91, awayOdds: 1.95 },
+        total: { line: 228.5, overOdds: 1.95, underOdds: 1.91 },
+        moneyline: { home: 1.78, away: 2.10 },
+      },
     },
     modelEdge: {
       market: 'Moneyline',
       pick: 'Nuggets ML',
       edgePct: 6.1,
       modelProb: 0.518,
+      marketKey: 'moneyline',
+      side: 'away',
     },
   },
 ];
@@ -484,18 +530,25 @@ export const MOCK_INSIGHTS: LeagueTrendInsight[] = [
 
 // Data service helpers with automatic fallback
 export async function getFixtures(sportFilter?: Sport | 'all'): Promise<MatchFixture[]> {
+  const sanitizeFixture = (f: MatchFixture): MatchFixture => ({
+    ...f,
+    dataSource: f.dataSource === 'live' ? 'live' : 'sample',
+  });
+
   try {
     const { data, error } = await supabase.from('fixtures').select('*');
     if (error || !data || data.length === 0) {
-      return sportFilter && sportFilter !== 'all'
+      const fixtures = sportFilter && sportFilter !== 'all'
         ? MOCK_FIXTURES.filter((f) => f.sport === sportFilter)
         : MOCK_FIXTURES;
+      return fixtures.map(sanitizeFixture);
     }
-    return data as MatchFixture[];
+    return (data as MatchFixture[]).map(sanitizeFixture);
   } catch {
-    return sportFilter && sportFilter !== 'all'
+    const fixtures = sportFilter && sportFilter !== 'all'
       ? MOCK_FIXTURES.filter((f) => f.sport === sportFilter)
       : MOCK_FIXTURES;
+    return fixtures.map(sanitizeFixture);
   }
 }
 
