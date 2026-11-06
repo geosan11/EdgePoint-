@@ -1,3 +1,5 @@
+import { BookId } from './books';
+
 export type Sport = 'basketball' | 'football';
 
 export type MarketType =
@@ -46,11 +48,19 @@ export interface MatchFixture {
       bestBook: string;
     };
   };
+  bookOdds?: Partial<Record<BookId, {
+    moneyline?: { home: number; away: number; draw?: number };
+    spread?: { line: number; homeOdds: number; awayOdds: number };
+    total?: { line: number; overOdds: number; underOdds: number };
+  }>>;
+  dataSource?: 'sample' | 'live';
   modelEdge?: {
     market: string;
     pick: string;
     edgePct: number;
     modelProb: number;
+    marketKey?: 'moneyline' | 'spread' | 'total';
+    side?: 'home' | 'away' | 'over' | 'under' | 'draw';
   };
 }
 
