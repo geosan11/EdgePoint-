@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ChevronDown, ChevronUp, Layers, MapPin, Radio, Zap } from 'lucide-react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AlertCircle, ChevronDown, ChevronUp, MapPin, Zap } from 'lucide-react-native';
 import { MatchFixture } from '../../lib/types';
 import { useBetStore } from '../../stores/useBetStore';
-import { useTheme } from '../../stores/useThemeStore';
+import { todayTheme } from '../../theme/todayTheme';
+import { OddsMatrix } from '../OddsMatrix';
 import { Badge } from './Badge';
-import { Card } from './Card';
-import { OddsBadge } from './OddsBadge';
-import { Text } from './Text';
 
 interface MatchCardProps {
   match: MatchFixture;
@@ -15,12 +13,19 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
-  const { tokens } = useTheme();
   const { toggleCustomLeg, isLegInSlip } = useBetStore();
   const [showMatrix, setShowMatrix] = useState(false);
 
   const isLive = match.status === 'live';
+  const isSample = match.dataSource !== 'live';
   const leagueTone = match.league === 'NBA' ? 'positive' : 'info';
+
+  const sporty = match.bookOdds?.sportybet;
+  const spreadLine = sporty?.spread?.line;
+  const spreadOdds = sporty?.spread?.awayOdds;
+  const totalLine = sporty?.total?.line;
+  const totalOdds = sporty?.total?.overOdds;
+  const mlOdds = sporty?.moneyline?.home;
 
   // Consistent Leg IDs for Slip Matching & Toggling
   const spreadLegId = `${match.id}_spread_${match.awayTeam}`;
@@ -31,12 +36,24 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
   const isTotalSelected = isLegInSlip(totalLegId);
   const isMlSelected = isLegInSlip(mlLegId);
 
+  // Check typed model edge matching (never fuzzy match)
+  const hasSpreadEdge =
+    match.modelEdge?.marketKey === 'spread' &&
+    (match.modelEdge?.side === 'away' || !match.modelEdge?.side);
+  const hasTotalEdge =
+    match.modelEdge?.marketKey === 'total' &&
+    (match.modelEdge?.side === 'over' || !match.modelEdge?.side);
+  const hasMlEdge =
+    match.modelEdge?.marketKey === 'moneyline' &&
+    (match.modelEdge?.side === 'home' || !match.modelEdge?.side);
+
   const handleOddPress = (
     legId: string,
     marketName: string,
     pick: string,
     odds: number,
-    book: string
+    book: string,
+    hasEdge: boolean
   ) => {
     if (onSelectOdd) {
       onSelectOdd(marketName, pick, odds, book);
@@ -47,24 +64,18 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
         prop: `${marketName}: ${pick}`,
         selection: pick,
         odds,
-        ev: match.modelEdge?.market === marketName ? `+${match.modelEdge.edgePct}% EV` : '+0.0% EV',
+        ev: hasEdge && match.modelEdge ? `+${match.modelEdge.edgePct.toFixed(1)}% EV` : '+0.0% EV',
         bookmaker: book,
       });
     }
   };
 
-  // Multi-book comparison lines
-  const booksComparison = [
-    { name: 'Pinnacle (Sharp)', spread: 1.91, total: 1.90, ml: 1.62, isSharp: true },
-    { name: 'Bet365', spread: 1.93, total: 1.91, ml: 1.67 },
-    { name: 'SportyBet', spread: 1.95, total: 1.92, ml: 1.68 },
-    { name: 'DraftKings', spread: 1.90, total: 1.93, ml: 1.65 },
-  ];
+  const boardLabel = sporty ? (isSample ? 'SportyBet (sample)' : 'SportyBet') : '—';
 
   return (
-    <Card style={styles.card}>
-      {/* 1. Terminal Header: Sport, Live Ticker, Model Edge */}
-      <View style={[styles.headerRow, { borderBottomColor: tokens.colors.border }]}>
+    <View style={styles.card}>
+      {/* 1. Terminal Header: Sport, Live Ticker with Sample Guard, Model Edge */}
+      <View style={styles.headerRow}>
         <View style={styles.badgeWrap}>
           <Badge
             label={match.league === 'NBA' ? 'NBA 🏀' : 'PREMIER LEAGUE ⚽'}
@@ -72,30 +83,33 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
             size="sm"
           />
           {isLive ? (
-            <View style={[styles.liveIndicator, { backgroundColor: 'rgba(0, 229, 153, 0.12)', borderColor: tokens.colors.primary }]}>
-              <View style={[styles.liveDot, { backgroundColor: tokens.colors.primary }]} />
-              <Text variant="badge" tone="brand">
-                {match.gameClock || 'LIVE'}
+            <View style={styles.liveIndicator}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>
+                {match.gameClock ? `LIVE · ${match.gameClock}` : 'LIVE'}
               </Text>
+              {isSample ? (
+                <View style={styles.inlineSampleBadge}>
+                  <Text style={styles.inlineSampleText}>SAMPLE</Text>
+                </View>
+              ) : null}
             </View>
           ) : (
-            <Text variant="dataSm" tone="tertiary">
+            <Text style={styles.commenceText}>
               {match.commenceTime}
             </Text>
           )}
         </View>
 
         {match.modelEdge ? (
-          <View
-            style={[
-              styles.edgePill,
-              { backgroundColor: tokens.colors.primarySoft, borderColor: tokens.colors.primary },
-            ]}
-          >
-            <Zap size={11} color={tokens.colors.primary} />
-            <Text variant="badge" tone="brand">
+          <View style={styles.edgePill}>
+            <Zap size={11} color={todayTheme.colors.primary} />
+            <Text style={styles.edgePillText}>
               +{match.modelEdge.edgePct.toFixed(1)}% EDGE
             </Text>
+            {isSample ? (
+              <Text style={styles.edgeSampleTag}>[SAMPLE]</Text>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -103,188 +117,255 @@ export function MatchCard({ match, onSelectOdd }: MatchCardProps) {
       {/* 2. Scoreboard & Team Face-Off */}
       <View style={styles.teamsSection}>
         <View style={styles.teamRow}>
-          <Text variant="headlineSm" numberOfLines={1} style={styles.teamName}>
+          <Text style={styles.teamName} numberOfLines={1}>
             {match.awayTeam}
           </Text>
           {match.awayScore !== undefined ? (
-            <Text variant="dataHero" tone={isLive ? 'brand' : 'primary'} style={styles.scoreText}>
+            <Text
+              style={[
+                styles.scoreText,
+                isLive && { color: todayTheme.colors.liveCyan },
+              ]}
+            >
               {match.awayScore}
             </Text>
           ) : (
-            <Text variant="dataSm" tone="tertiary">
-              AWAY
-            </Text>
+            <Text style={styles.teamRoleText}>AWAY</Text>
           )}
         </View>
 
         <View style={styles.teamRow}>
-          <Text variant="headlineSm" numberOfLines={1} style={styles.teamName}>
+          <Text style={styles.teamName} numberOfLines={1}>
             {match.homeTeam}
           </Text>
           {match.homeScore !== undefined ? (
-            <Text variant="dataHero" tone={isLive ? 'brand' : 'primary'} style={styles.scoreText}>
+            <Text
+              style={[
+                styles.scoreText,
+                isLive && { color: todayTheme.colors.liveCyan },
+              ]}
+            >
               {match.homeScore}
             </Text>
           ) : (
-            <Text variant="dataSm" tone="tertiary">
-              HOME
-            </Text>
+            <Text style={styles.teamRoleText}>HOME</Text>
           )}
         </View>
 
         {match.stadium ? (
           <View style={styles.stadiumRow}>
-            <MapPin size={11} color={tokens.colors.textTertiary} />
-            <Text variant="label" tone="tertiary">
-              {match.stadium}
-            </Text>
+            <MapPin size={11} color={todayTheme.colors.textTertiary} />
+            <Text style={styles.stadiumText}>{match.stadium}</Text>
           </View>
         ) : null}
       </View>
 
-      {/* 3. The 3-Column Betting Board */}
+      {/* 3. Compact Market Board (SportyBet only, no fake bestBook) */}
       <View style={styles.oddsBoard}>
         <View style={styles.oddsColHeaders}>
-          <Text variant="label" tone="tertiary" style={styles.oddsColTitle}>
-            SPREAD
-          </Text>
-          <Text variant="label" tone="tertiary" style={styles.oddsColTitle}>
-            TOTAL
-          </Text>
-          <Text variant="label" tone="tertiary" style={styles.oddsColTitle}>
-            MONEYLINE
+          <Text style={styles.boardHeaderTitle}>MARKET BOARD</Text>
+          <Text
+            style={[
+              styles.boardHeaderBook,
+              isSample ? { color: todayTheme.colors.sampleAmber } : { color: todayTheme.colors.primary },
+            ]}
+          >
+            {boardLabel}
           </Text>
         </View>
 
         <View style={styles.oddsContainer}>
-          {match.markets.spread ? (
-            <View style={styles.oddsCol}>
-              <OddsBadge
-                label={`${match.markets.spread.line > 0 ? `+${match.markets.spread.line}` : match.markets.spread.line}`}
-                odds={match.markets.spread.awayOdds}
-                bookmaker={match.markets.spread.bestBook}
-                hasEdge={match.modelEdge?.market === 'Spread'}
-                edgeText={match.modelEdge?.market === 'Spread' ? `+${match.modelEdge.edgePct}%` : undefined}
-                isSelected={isSpreadSelected}
-                onPress={() =>
-                  handleOddPress(
-                    spreadLegId,
-                    'Spread',
-                    `${match.awayTeam} ${match.markets.spread?.line}`,
-                    match.markets.spread!.awayOdds,
-                    match.markets.spread!.bestBook
-                  )
-                }
-              />
+          {/* Spread Button */}
+          <TouchableOpacity
+            style={[
+              styles.oddButton,
+              hasSpreadEdge && !isSpreadSelected && styles.oddButtonEdge,
+              isSpreadSelected && styles.oddButtonSelected,
+              isSample && !hasSpreadEdge && !isSpreadSelected && styles.oddButtonMuted,
+            ]}
+            activeOpacity={0.7}
+            disabled={spreadOdds === undefined}
+            onPress={() => {
+              if (spreadOdds !== undefined && spreadLine !== undefined) {
+                const spreadStr = spreadLine > 0 ? `+${spreadLine}` : `${spreadLine}`;
+                handleOddPress(
+                  spreadLegId,
+                  'Spread',
+                  `${match.awayTeam} ${spreadStr}`,
+                  spreadOdds,
+                  'SportyBet',
+                  hasSpreadEdge
+                );
+              }
+            }}
+          >
+            <View style={styles.oddTopRow}>
+              <Text
+                style={[
+                  styles.oddLabel,
+                  isSpreadSelected && { color: todayTheme.colors.onPrimary },
+                ]}
+              >
+                {spreadLine !== undefined
+                  ? `SPREAD ${spreadLine > 0 ? `+${spreadLine}` : spreadLine}`
+                  : 'SPREAD'}
+              </Text>
             </View>
-          ) : null}
+            <View style={styles.oddBottomRow}>
+              <Text
+                style={[
+                  styles.oddPrice,
+                  hasSpreadEdge && !isSpreadSelected && { color: todayTheme.colors.primary },
+                  isSpreadSelected && { color: todayTheme.colors.onPrimary },
+                  isSample && !hasSpreadEdge && !isSpreadSelected && { color: todayTheme.colors.textSecondary },
+                ]}
+              >
+                {spreadOdds !== undefined ? spreadOdds.toFixed(2) : '—'}
+              </Text>
+              {hasSpreadEdge && !isSpreadSelected ? (
+                <View style={styles.edgeTag}>
+                  <Text style={styles.edgeTagText}>+EV</Text>
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
 
-          {match.markets.total ? (
-            <View style={styles.oddsCol}>
-              <OddsBadge
-                label={`O ${match.markets.total.line}`}
-                odds={match.markets.total.overOdds}
-                bookmaker={match.markets.total.bestBook}
-                hasEdge={match.modelEdge?.market === 'Total'}
-                edgeText={match.modelEdge?.market === 'Total' ? `+${match.modelEdge.edgePct}%` : undefined}
-                isSelected={isTotalSelected}
-                onPress={() =>
-                  handleOddPress(
-                    totalLegId,
-                    'Total',
-                    `Over ${match.markets.total?.line}`,
-                    match.markets.total!.overOdds,
-                    match.markets.total!.bestBook
-                  )
-                }
-              />
+          {/* Total Button */}
+          <TouchableOpacity
+            style={[
+              styles.oddButton,
+              hasTotalEdge && !isTotalSelected && styles.oddButtonEdge,
+              isTotalSelected && styles.oddButtonSelected,
+              isSample && !hasTotalEdge && !isTotalSelected && styles.oddButtonMuted,
+            ]}
+            activeOpacity={0.7}
+            disabled={totalOdds === undefined}
+            onPress={() => {
+              if (totalOdds !== undefined && totalLine !== undefined) {
+                handleOddPress(
+                  totalLegId,
+                  'Total',
+                  `Over ${totalLine}`,
+                  totalOdds,
+                  'SportyBet',
+                  hasTotalEdge
+                );
+              }
+            }}
+          >
+            <View style={styles.oddTopRow}>
+              <Text
+                style={[
+                  styles.oddLabel,
+                  isTotalSelected && { color: todayTheme.colors.onPrimary },
+                ]}
+              >
+                {totalLine !== undefined ? `TOTAL O ${totalLine}` : 'TOTAL'}
+              </Text>
             </View>
-          ) : null}
+            <View style={styles.oddBottomRow}>
+              <Text
+                style={[
+                  styles.oddPrice,
+                  hasTotalEdge && !isTotalSelected && { color: todayTheme.colors.primary },
+                  isTotalSelected && { color: todayTheme.colors.onPrimary },
+                  isSample && !hasTotalEdge && !isTotalSelected && { color: todayTheme.colors.textSecondary },
+                ]}
+              >
+                {totalOdds !== undefined ? totalOdds.toFixed(2) : '—'}
+              </Text>
+              {hasTotalEdge && !isTotalSelected ? (
+                <View style={styles.edgeTag}>
+                  <Text style={styles.edgeTagText}>+EV</Text>
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
 
-          {match.markets.moneyline ? (
-            <View style={styles.oddsCol}>
-              <OddsBadge
-                label="HOME ML"
-                odds={match.markets.moneyline.home}
-                bookmaker={match.markets.moneyline.bestBook}
-                hasEdge={match.modelEdge?.market === 'Moneyline'}
-                edgeText={match.modelEdge?.market === 'Moneyline' ? `+${match.modelEdge.edgePct}%` : undefined}
-                isSelected={isMlSelected}
-                onPress={() =>
-                  handleOddPress(
-                    mlLegId,
-                    'Moneyline',
-                    `${match.homeTeam} ML`,
-                    match.markets.moneyline!.home,
-                    match.markets.moneyline!.bestBook
-                  )
-                }
-              />
+          {/* Moneyline Button */}
+          <TouchableOpacity
+            style={[
+              styles.oddButton,
+              hasMlEdge && !isMlSelected && styles.oddButtonEdge,
+              isMlSelected && styles.oddButtonSelected,
+              isSample && !hasMlEdge && !isMlSelected && styles.oddButtonMuted,
+            ]}
+            activeOpacity={0.7}
+            disabled={mlOdds === undefined}
+            onPress={() => {
+              if (mlOdds !== undefined) {
+                handleOddPress(
+                  mlLegId,
+                  'Moneyline',
+                  `${match.homeTeam} ML`,
+                  mlOdds,
+                  'SportyBet',
+                  hasMlEdge
+                );
+              }
+            }}
+          >
+            <View style={styles.oddTopRow}>
+              <Text
+                style={[
+                  styles.oddLabel,
+                  isMlSelected && { color: todayTheme.colors.onPrimary },
+                ]}
+              >
+                HOME ML
+              </Text>
             </View>
-          ) : null}
+            <View style={styles.oddBottomRow}>
+              <Text
+                style={[
+                  styles.oddPrice,
+                  hasMlEdge && !isMlSelected && { color: todayTheme.colors.primary },
+                  isMlSelected && { color: todayTheme.colors.onPrimary },
+                  isSample && !hasMlEdge && !isMlSelected && { color: todayTheme.colors.textSecondary },
+                ]}
+              >
+                {mlOdds !== undefined ? mlOdds.toFixed(2) : '—'}
+              </Text>
+              {hasMlEdge && !isMlSelected ? (
+                <View style={styles.edgeTag}>
+                  <Text style={styles.edgeTagText}>+EV</Text>
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* 4. Multi-Bookmaker Drawer Toggle */}
+      {/* 4. Odds Matrix Toggle */}
       <TouchableOpacity
-        style={[styles.matrixToggle, { borderTopColor: tokens.colors.border }]}
+        style={styles.matrixToggle}
         onPress={() => setShowMatrix(!showMatrix)}
         activeOpacity={0.7}
       >
-        <Text variant="badge" tone="secondary">
-          {showMatrix ? 'HIDE SPORTSBOOK MATRIX' : 'COMPARE 4 SPORTSBOOKS (PINNACLE / B365 / DK)'}
+        <Text style={styles.matrixToggleText}>
+          {showMatrix ? 'HIDE ODDS MATRIX' : 'ODDS MATRIX (4 BOOKS)'}
         </Text>
         {showMatrix ? (
-          <ChevronUp size={13} color={tokens.colors.textSecondary} />
+          <ChevronUp size={13} color={todayTheme.colors.textSecondary} />
         ) : (
-          <ChevronDown size={13} color={tokens.colors.textSecondary} />
+          <ChevronDown size={13} color={todayTheme.colors.textSecondary} />
         )}
       </TouchableOpacity>
 
-      {/* Multi-Bookmaker Financial Table */}
+      {/* Reusable Odds Matrix Grid */}
       {showMatrix ? (
-        <View style={[styles.matrixTable, { backgroundColor: tokens.colors.surfaceInset, borderColor: tokens.colors.border }]}>
-          <View style={[styles.matrixHeaderRow, { borderBottomColor: tokens.colors.border }]}>
-            <Text variant="label" tone="tertiary" style={{ flex: 1.6 }}>
-              BOOKMAKER
-            </Text>
-            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'center' }}>
-              SPREAD
-            </Text>
-            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'center' }}>
-              TOTAL
-            </Text>
-            <Text variant="label" tone="tertiary" style={{ flex: 1, textAlign: 'right' }}>
-              ML
-            </Text>
-          </View>
-
-          {booksComparison.map((b) => (
-            <View key={b.name} style={[styles.matrixRow, { borderBottomColor: tokens.colors.border }]}>
-              <View style={{ flex: 1.6 }}>
-                <Text variant="dataSm" tone={b.isSharp ? 'brand' : 'primary'}>
-                  {b.name}
-                </Text>
-              </View>
-              <Text variant="dataSm" tone={b.spread === 1.95 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'center' }}>
-                {b.spread.toFixed(2)}
-              </Text>
-              <Text variant="dataSm" tone={b.total === 1.93 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'center' }}>
-                {b.total.toFixed(2)}
-              </Text>
-              <Text variant="dataSm" tone={b.ml === 1.68 ? 'brand' : 'secondary'} style={{ flex: 1, textAlign: 'right' }}>
-                {b.ml.toFixed(2)}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <OddsMatrix match={match} onSelectOdd={onSelectOdd} />
       ) : null}
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: todayTheme.colors.surface,
+    borderColor: todayTheme.colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
@@ -296,6 +377,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 8,
     borderBottomWidth: 1,
+    borderBottomColor: todayTheme.colors.borderSubtle,
   },
   badgeWrap: {
     flexDirection: 'row',
@@ -309,21 +391,63 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
+    backgroundColor: todayTheme.colors.liveCyanSoft,
     borderWidth: 1,
+    borderColor: todayTheme.colors.liveCyanBorder,
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    backgroundColor: todayTheme.colors.liveCyan,
+  },
+  liveText: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 9,
+    color: todayTheme.colors.liveCyan,
+    letterSpacing: 0.4,
+  },
+  inlineSampleBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 0.5,
+    borderRadius: 3,
+    backgroundColor: todayTheme.colors.sampleAmberSoft,
+    borderWidth: 0.5,
+    borderColor: todayTheme.colors.sampleAmberBorder,
+    marginLeft: 2,
+  },
+  inlineSampleText: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 7.5,
+    color: todayTheme.colors.sampleAmber,
+  },
+  commenceText: {
+    fontFamily: todayTheme.fonts.hanken.medium,
+    fontSize: 11,
+    color: todayTheme.colors.textTertiary,
   },
   edgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 4,
+    backgroundColor: todayTheme.colors.primarySoft,
     borderWidth: 1,
+    borderColor: todayTheme.colors.primaryBorder,
+  },
+  edgePillText: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 10,
+    color: todayTheme.colors.primary,
+    letterSpacing: 0.3,
+  },
+  edgeSampleTag: {
+    fontFamily: todayTheme.fonts.mono.regular,
+    fontSize: 8,
+    color: todayTheme.colors.sampleAmber,
+    marginLeft: 2,
   },
   teamsSection: {
     gap: 4,
@@ -336,18 +460,34 @@ const styles = StyleSheet.create({
   },
   teamName: {
     flex: 1,
+    fontFamily: todayTheme.fonts.space.bold,
     fontSize: 16,
     letterSpacing: -0.2,
+    color: todayTheme.colors.textPrimary,
   },
   scoreText: {
     minWidth: 32,
     textAlign: 'right',
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 22,
+    letterSpacing: -0.5,
+    color: todayTheme.colors.textPrimary,
+  },
+  teamRoleText: {
+    fontFamily: todayTheme.fonts.mono.medium,
+    fontSize: 11,
+    color: todayTheme.colors.textTertiary,
   },
   stadiumRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginTop: 2,
+  },
+  stadiumText: {
+    fontFamily: todayTheme.fonts.hanken.regular,
+    fontSize: 10,
+    color: todayTheme.colors.textTertiary,
   },
   oddsBoard: {
     gap: 6,
@@ -356,45 +496,97 @@ const styles = StyleSheet.create({
   oddsColHeaders: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 2,
   },
-  oddsColTitle: {
-    flex: 1,
-    textAlign: 'center',
+  boardHeaderTitle: {
+    fontFamily: todayTheme.fonts.hanken.bold,
     fontSize: 9,
     letterSpacing: 0.8,
+    color: todayTheme.colors.textTertiary,
+  },
+  boardHeaderBook: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 9,
+    letterSpacing: 0.5,
   },
   oddsContainer: {
     flexDirection: 'row',
     gap: 8,
   },
-  oddsCol: {
+  oddButton: {
     flex: 1,
+    minHeight: 52,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    borderRadius: 7,
+    backgroundColor: todayTheme.colors.surfaceInset,
+    borderWidth: 1,
+    borderColor: todayTheme.colors.border,
+    justifyContent: 'space-between',
+  },
+  oddButtonMuted: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: todayTheme.colors.borderSubtle,
+  },
+  oddButtonEdge: {
+    backgroundColor: todayTheme.colors.primarySoft,
+    borderColor: todayTheme.colors.primaryBorder,
+    borderLeftWidth: 2.5,
+    borderLeftColor: todayTheme.colors.primary,
+  },
+  oddButtonSelected: {
+    backgroundColor: todayTheme.colors.primary,
+    borderColor: todayTheme.colors.primary,
+  },
+  oddTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  oddLabel: {
+    fontFamily: todayTheme.fonts.hanken.semiBold,
+    fontSize: 9.5,
+    letterSpacing: 0.3,
+    color: todayTheme.colors.textSecondary,
+  },
+  oddBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  oddPrice: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+    color: todayTheme.colors.textPrimary,
+  },
+  edgeTag: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0, 229, 163, 0.2)',
+  },
+  edgeTagText: {
+    fontFamily: todayTheme.fonts.mono.bold,
+    fontSize: 8.5,
+    color: todayTheme.colors.primary,
   },
   matrixToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    paddingTop: 10,
-    marginTop: 4,
+    paddingTop: 8,
+    marginTop: 2,
     borderTopWidth: 1,
+    borderTopColor: todayTheme.colors.borderSubtle,
   },
-  matrixTable: {
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 10,
-    marginTop: 6,
-    gap: 4,
-  },
-  matrixHeaderRow: {
-    flexDirection: 'row',
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-  },
-  matrixRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
+  matrixToggleText: {
+    fontFamily: todayTheme.fonts.hanken.semiBold,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    color: todayTheme.colors.textSecondary,
   },
 });
