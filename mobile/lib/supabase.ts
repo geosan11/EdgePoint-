@@ -89,7 +89,7 @@ export const MOCK_FIXTURES: MatchFixture[] = [
     modelEdge: {
       market: 'Total',
       pick: 'Over 2.5',
-      edgePct: 7.2,
+      edgePct: 16.5,
       modelProb: 0.612,
       marketKey: 'total',
       side: 'over',

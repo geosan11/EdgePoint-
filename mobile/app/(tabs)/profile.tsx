@@ -22,7 +22,8 @@ import { CreatePostModal } from '../../components/CreatePostModal';
 import { Badge, Button, Card, MetricTile, Text } from '../../components/ui';
 import { useBetStore } from '../../stores/useBetStore';
 import { useCommunityStore } from '../../stores/useCommunityStore';
-import { ThemeMode, useTheme } from '../../stores/useThemeStore';
+import { ThemeContext, ThemeMode, useTheme } from '../../stores/useThemeStore';
+import { lightTokens } from '../../theme/tokens';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -42,7 +43,8 @@ export default function ProfileScreen() {
     setMinEdgeScore,
     slipLegs,
   } = useBetStore();
-  const { tokens, mode, setMode } = useTheme();
+  const { mode, setMode } = useTheme();
+  const tokens = lightTokens;
   const { tipsters, subscribedTipsterIds, unsubscribeFromTipster } = useCommunityStore();
 
   const [bankrollInput, setBankrollInput] = useState(bankroll.toString());
@@ -94,11 +96,12 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: tokens.colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <ThemeContext.Provider value={lightTokens}>
+      <ScrollView
+        style={[styles.screen, { backgroundColor: tokens.colors.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
       {/* 0. Hub & Sub-Screens Navigation */}
       <Card style={styles.card}>
         <Text variant="title" style={styles.cardHeaderTitle}>
@@ -468,6 +471,7 @@ export default function ProfileScreen() {
 
       <CreatePostModal visible={createPostVisible} onClose={() => setCreatePostVisible(false)} />
     </ScrollView>
+  </ThemeContext.Provider>
   );
 }
 

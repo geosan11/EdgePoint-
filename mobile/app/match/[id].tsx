@@ -37,7 +37,9 @@ import {
 } from '../../components/reusables';
 import {
   fairOdds,
+  formatKickoffWAT,
   generateKeyInsight,
+  getFixtureMarketEdge,
   getSportyBetOdds,
   getTeamMonogram,
   winProb,
@@ -110,10 +112,15 @@ export default function MatchDetailScreen() {
   const isLive = fixture?.status === 'live' && fixture?.dataSource === 'live';
   const isSample = fixture?.dataSource !== 'live';
 
-  // Derived metrics
-  const edgeScore = prediction?.edge_score ?? null;
+  // Derived metrics via single source edge selector
+  const fixtureMarketEdge = useMemo(() => {
+    return getFixtureMarketEdge(fixture, prediction);
+  }, [fixture, prediction]);
+
+  const edgePct = fixtureMarketEdge.edgePct;
+  const marketLabel = fixtureMarketEdge.marketLabel;
+  const edgeScore = fixtureMarketEdge.edgeScore ?? prediction?.edge_score ?? null;
   const hasValidEdgeScore = typeof edgeScore === 'number' && edgeScore > 0 && edgeScore <= 100;
-  const edgePct = fixture?.modelEdge?.edgePct ?? prediction?.ev_percentage ?? 0;
 
   const probability = winProb(prediction) || winProb(fixture);
   const fairOddsVal = fairOdds(probability);
@@ -126,13 +133,13 @@ export default function MatchDetailScreen() {
 
   const keyInsight = generateKeyInsight({
     summary: prediction?.analysis_notes ? undefined : undefined,
-    pickName: fixture?.modelEdge?.pick || prediction?.match_title,
+    pickName: fixtureMarketEdge.pickName || fixture?.modelEdge?.pick || prediction?.match_title,
     modelProb: probability,
     sportyOdds,
     edgePct,
   });
 
-  const pickName = fixture?.modelEdge?.pick || `${prediction?.selection || 'Sharp Pick'} (${fixture?.modelEdge?.market || 'Edge'})`;
+  const pickName = fixtureMarketEdge.pickName || fixture?.modelEdge?.pick || `${prediction?.selection || 'Sharp Pick'} (${marketLabel})`;
   const legId = prediction?.id || fixture?.id || '';
   const legInSlip = isLegInSlip(legId);
 
@@ -233,7 +240,7 @@ export default function MatchDetailScreen() {
               ) : (
                 <View className="flex-row items-center">
                   <Clock size={13} color="#64748B" />
-                  <Text className="text-xs font-medium text-[#64748B] ml-1.5">{fixture.commenceTime}</Text>
+                  <Text className="text-xs font-medium text-[#64748B] ml-1.5">{formatKickoffWAT(fixture.commenceTime)}</Text>
                 </View>
               )}
             </View>
@@ -250,10 +257,25 @@ export default function MatchDetailScreen() {
             {/* Away Team */}
             <View className="flex-1 items-center">
               <View
-                style={{ backgroundColor: awayCrest.bgColor }}
-                className="w-14 h-14 rounded-2xl items-center justify-center mb-2 shadow-sm"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: awayCrest.bgColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                className="mb-2 shadow-xs"
               >
-                <Text style={{ color: awayCrest.textColor }} className="text-base font-extrabold tracking-wide">
+                <Text
+                  style={{
+                    color: awayCrest.textColor,
+                    fontSize: awayCrest.initials.length > 2 ? 12 : 14,
+                    fontWeight: '800',
+                    textAlign: 'center',
+                    letterSpacing: -0.2,
+                  }}
+                >
                   {awayCrest.initials}
                 </Text>
               </View>
@@ -277,10 +299,25 @@ export default function MatchDetailScreen() {
             {/* Home Team */}
             <View className="flex-1 items-center">
               <View
-                style={{ backgroundColor: homeCrest.bgColor }}
-                className="w-14 h-14 rounded-2xl items-center justify-center mb-2 shadow-sm"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: homeCrest.bgColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                className="mb-2 shadow-xs"
               >
-                <Text style={{ color: homeCrest.textColor }} className="text-base font-extrabold tracking-wide">
+                <Text
+                  style={{
+                    color: homeCrest.textColor,
+                    fontSize: homeCrest.initials.length > 2 ? 12 : 14,
+                    fontWeight: '800',
+                    textAlign: 'center',
+                    letterSpacing: -0.2,
+                  }}
+                >
                   {homeCrest.initials}
                 </Text>
               </View>
@@ -305,7 +342,7 @@ export default function MatchDetailScreen() {
             </View>
 
             <Badge variant="green" className="px-2 py-0.5">
-              <Text className="text-xs font-bold text-emerald-800">+{edgePct.toFixed(1)}% Edge</Text>
+              <Text className="text-xs font-bold text-emerald-800">+{edgePct.toFixed(1)}% {marketLabel} Edge</Text>
             </Badge>
           </View>
 
@@ -313,8 +350,8 @@ export default function MatchDetailScreen() {
           <View className="flex-row items-center justify-between bg-[#F8FAFC] rounded-xl p-3 border border-[#E2E8F0] mb-4">
             {/* Edge Rating / Score */}
             <View className="items-center flex-1">
-              <Text className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">
-                Edge Rating
+              <Text className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1" numberOfLines={1}>
+                {marketLabel} Edge
               </Text>
               {hasValidEdgeScore ? (
                 <View className="h-11 w-11 rounded-full border-2 border-[#059669] items-center justify-center bg-white shadow-xs">

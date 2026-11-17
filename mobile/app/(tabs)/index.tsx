@@ -38,7 +38,9 @@ import {
   bestPick,
   fairOdds,
   featured,
+  formatKickoffWAT,
   generateKeyInsight,
+  getFixtureMarketEdge,
   getSportyBetOdds,
   getTeamMonogram,
   todaysPicks,
@@ -102,7 +104,7 @@ export default function HomeScreen() {
     return fixtures.some((f) => f.dataSource !== 'live');
   }, [fixtures]);
 
-  // Hero calculations
+  // Hero calculations via single-source edge selector
   const heroProb = winProb(heroPick) || winProb(heroFixture);
   const heroSportyOdds = getSportyBetOdds(
     heroFixture,
@@ -110,8 +112,13 @@ export default function HomeScreen() {
     heroFixture?.modelEdge?.side
   ) ?? heroPick?.sportsbook_odds ?? null;
 
-  const heroEdgePct = heroPick?.ev_percentage ?? heroFixture?.modelEdge?.edgePct ?? 0;
-  const heroEdgeScore = heroPick?.edge_score ?? null;
+  const heroMarketEdge = useMemo(() => {
+    return getFixtureMarketEdge(heroFixture, heroPick, predictions);
+  }, [heroFixture, heroPick, predictions]);
+
+  const heroEdgePct = heroMarketEdge.edgePct;
+  const heroMarketLabel = heroMarketEdge.marketLabel;
+  const heroEdgeScore = heroMarketEdge.edgeScore ?? heroPick?.edge_score ?? null;
   const hasValidHeroScore =
     typeof heroEdgeScore === 'number' && heroEdgeScore > 0 && heroEdgeScore <= 100;
 
@@ -314,19 +321,19 @@ export default function HomeScreen() {
           <View className="mb-6">
             <Card className="bg-white border-[#E2E8F0] shadow-sm rounded-2xl p-5">
               {/* Card Header: League Tag + Kickoff + Sample pill */}
-              <View className="flex-row items-center justify-between mb-3 pb-2.5 border-b border-[#F1F5F9]">
-                <View className="flex-row items-center gap-1.5">
+              <View className="flex-row items-center justify-between flex-wrap gap-2 mb-3 pb-2.5 border-b border-[#F1F5F9]">
+                <View className="flex-row items-center flex-wrap gap-1.5 shrink">
                   <Badge variant="outline" className="border-[#E2E8F0] bg-[#F8FAFC] px-2 py-0.5">
                     <Text className="text-[10px] font-bold text-[#475569]">{heroTeams.league}</Text>
                   </Badge>
-                  <View className="flex-row items-center ml-1">
+                  <View className="flex-row items-center ml-1 shrink-0">
                     <Clock size={12} color="#64748B" />
-                    <Text className="text-xs text-[#64748B] ml-1 font-medium">{heroTeams.commence}</Text>
+                    <Text className="text-xs text-[#64748B] ml-1 font-medium">{formatKickoffWAT(heroTeams.commence)}</Text>
                   </View>
                 </View>
 
-                <View className="flex-row items-center">
-                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 mr-1.5">
+                <View className="flex-row items-center flex-wrap gap-1.5 shrink-0">
+                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                     <Text className="text-[10px] font-bold text-emerald-800">PICK OF THE DAY</Text>
                   </View>
                   {heroFixture?.dataSource !== 'live' && (
@@ -342,10 +349,25 @@ export default function HomeScreen() {
                 {/* Away Team */}
                 <View className="flex-1 items-center">
                   <View
-                    style={{ backgroundColor: awayCrest.bgColor }}
-                    className="w-13 h-13 rounded-2xl items-center justify-center mb-1.5 shadow-xs"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: awayCrest.bgColor,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    className="mb-1.5 shadow-xs"
                   >
-                    <Text style={{ color: awayCrest.textColor }} className="text-base font-extrabold tracking-wide">
+                    <Text
+                      style={{
+                        color: awayCrest.textColor,
+                        fontSize: awayCrest.initials.length > 2 ? 12 : 14,
+                        fontWeight: '800',
+                        textAlign: 'center',
+                        letterSpacing: -0.2,
+                      }}
+                    >
                       {awayCrest.initials}
                     </Text>
                   </View>
@@ -374,10 +396,25 @@ export default function HomeScreen() {
                 {/* Home Team */}
                 <View className="flex-1 items-center">
                   <View
-                    style={{ backgroundColor: homeCrest.bgColor }}
-                    className="w-13 h-13 rounded-2xl items-center justify-center mb-1.5 shadow-xs"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: homeCrest.bgColor,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    className="mb-1.5 shadow-xs"
                   >
-                    <Text style={{ color: homeCrest.textColor }} className="text-base font-extrabold tracking-wide">
+                    <Text
+                      style={{
+                        color: homeCrest.textColor,
+                        fontSize: homeCrest.initials.length > 2 ? 12 : 14,
+                        fontWeight: '800',
+                        textAlign: 'center',
+                        letterSpacing: -0.2,
+                      }}
+                    >
                       {homeCrest.initials}
                     </Text>
                   </View>
@@ -408,7 +445,9 @@ export default function HomeScreen() {
                 <View className="h-7 w-[1px] bg-[#E2E8F0]" />
 
                 <View className="items-center flex-1">
-                  <Text className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Edge %</Text>
+                  <Text className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider" numberOfLines={1}>
+                    {heroMarketLabel}
+                  </Text>
                   <Text className="text-base font-black text-[#059669]">+{heroEdgePct.toFixed(1)}%</Text>
                 </View>
               </View>
@@ -483,7 +522,9 @@ export default function HomeScreen() {
                 const homeM = getTeamMonogram(m.homeTeam);
                 const awayM = getTeamMonogram(m.awayTeam);
                 const isMatchLive = m.status === 'live' && m.dataSource === 'live';
-                const edge = m.modelEdge?.edgePct ?? 0;
+                const marketEdge = getFixtureMarketEdge(m, undefined, predictions);
+                const edge = marketEdge.edgePct;
+                const edgeMarketLabel = marketEdge.marketLabel;
 
                 return (
                   <TouchableOpacity
@@ -502,7 +543,7 @@ export default function HomeScreen() {
                         </View>
                       ) : (
                         <Text className="text-[10px] text-[#94A3B8]" numberOfLines={1}>
-                          {m.commenceTime}
+                          {formatKickoffWAT(m.commenceTime)}
                         </Text>
                       )}
                     </View>
@@ -511,10 +552,25 @@ export default function HomeScreen() {
                     <View className="flex-row items-center justify-between my-1">
                       <View className="items-center flex-1">
                         <View
-                          style={{ backgroundColor: awayM.bgColor }}
-                          className="w-8 h-8 rounded-xl items-center justify-center mb-1"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: awayM.bgColor,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          className="mb-1 shadow-xs"
                         >
-                          <Text style={{ color: awayM.textColor }} className="text-[10px] font-bold">
+                          <Text
+                            style={{
+                              color: awayM.textColor,
+                              fontSize: awayM.initials.length > 2 ? 8.5 : 10,
+                              fontWeight: '800',
+                              textAlign: 'center',
+                              letterSpacing: -0.2,
+                            }}
+                          >
                             {awayM.initials}
                           </Text>
                         </View>
@@ -532,10 +588,25 @@ export default function HomeScreen() {
 
                       <View className="items-center flex-1">
                         <View
-                          style={{ backgroundColor: homeM.bgColor }}
-                          className="w-8 h-8 rounded-xl items-center justify-center mb-1"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: homeM.bgColor,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          className="mb-1 shadow-xs"
                         >
-                          <Text style={{ color: homeM.textColor }} className="text-[10px] font-bold">
+                          <Text
+                            style={{
+                              color: homeM.textColor,
+                              fontSize: homeM.initials.length > 2 ? 8.5 : 10,
+                              fontWeight: '800',
+                              textAlign: 'center',
+                              letterSpacing: -0.2,
+                            }}
+                          >
                             {homeM.initials}
                           </Text>
                         </View>
@@ -550,8 +621,8 @@ export default function HomeScreen() {
 
                     {/* Bottom Edge Pill */}
                     <View className="mt-2 pt-2 border-t border-[#F1F5F9] flex-row items-center justify-between">
-                      <Text className="text-[9px] text-[#64748B] font-semibold">
-                        {m.modelEdge?.pick ? 'Model Edge' : 'Analysis'}
+                      <Text className="text-[9px] text-[#64748B] font-semibold" numberOfLines={1}>
+                        {edgeMarketLabel}
                       </Text>
                       {edge > 0 ? (
                         <Text className="text-[10px] font-extrabold text-[#059669]">+{edge.toFixed(1)}%</Text>
@@ -597,7 +668,7 @@ export default function HomeScreen() {
                         <Badge variant="outline" className="border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-0.2">
                           <Text className="text-[9px] font-bold text-[#64748B]">{p.league_name || p.sport}</Text>
                         </Badge>
-                        <Text className="text-[10px] text-[#94A3B8]">{p.commence_time}</Text>
+                        <Text className="text-[10px] text-[#94A3B8]">{formatKickoffWAT(p.commence_time)}</Text>
                       </View>
 
                       <Text className="text-xs font-bold text-[#0F172A] mb-0.5" numberOfLines={1}>

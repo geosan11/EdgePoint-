@@ -5,12 +5,15 @@ import {
   fairOdds,
   isTodayInLagos,
   getLagosDateString,
+  formatKickoffWAT,
   bestPick,
   todaysPicks,
   featured,
   getSportyBetOdds,
   generateKeyInsight,
   getTeamMonogram,
+  getFixtureMarketEdge,
+  formatMarketLabel,
 } from '../homeSelectors';
 import type { MatchFixture, Prediction } from '../types';
 
@@ -292,6 +295,129 @@ describe('Home Selectors - Featured Carousel & SportyBet Odds', () => {
 
     const generic = getTeamMonogram('Napoli');
     assert.ok(generic.initials.length >= 2);
+    assert.ok(generic.initials.length <= 3);
     assert.ok(generic.bgColor.startsWith('#'));
+  });
+});
+
+describe('Home Selectors - Kickoff Times in Africa/Lagos (WAT)', () => {
+  const refDate = new Date('2026-11-17T12:00:00Z');
+
+  it('formats ET kickoff times into Africa/Lagos (WAT)', () => {
+    // 12:30 PM ET = 17:30 UTC = 18:30 WAT (Today, 6:30 PM WAT)
+    const lagos1 = formatKickoffWAT('Today, 12:30 PM ET', refDate);
+    assert.ok(lagos1.includes('WAT'), 'Should be labelled WAT');
+    assert.ok(lagos1.includes('6:30 PM') || lagos1.includes('18:30'), 'Should convert 12:30 PM ET to 6:30 PM');
+
+    // 11:30 AM ET = 16:30 UTC = 17:30 WAT (Tomorrow, 5:30 PM WAT)
+    const lagos2 = formatKickoffWAT('Tomorrow, 11:30 AM ET', refDate);
+    assert.ok(lagos2.includes('WAT'), 'Should be labelled WAT');
+    assert.ok(lagos2.includes('Tomorrow'));
+  });
+
+  it('formats ISO timestamps into Africa/Lagos (WAT)', () => {
+    const isoResult = formatKickoffWAT('2026-11-17T17:30:00Z', refDate);
+    assert.ok(isoResult.includes('WAT'));
+    assert.ok(isoResult.includes('6:30 PM') || isoResult.includes('18:30'));
+  });
+
+  it('preserves strings that already end in WAT', () => {
+    const existing = 'Today, 6:30 PM WAT';
+    assert.equal(formatKickoffWAT(existing, refDate), existing);
+  });
+});
+
+describe('Home Selectors - Single Source Fixture & Market Edge', () => {
+  const mockFixture: MatchFixture = {
+    id: 'fix-epl-1',
+    sport: 'football',
+    league: 'Premier League',
+    awayTeam: 'Chelsea',
+    homeTeam: 'Arsenal',
+    status: 'live',
+    commenceTime: 'Today, 12:30 PM ET',
+    dataSource: 'sample',
+    markets: {
+      total: { line: 2.5, overOdds: 1.91, underOdds: 1.95, bestBook: 'Bet365' },
+      moneyline: { home: 1.85, away: 4.2, draw: 3.75, bestBook: 'SportyBet' },
+    },
+    modelEdge: {
+      market: 'Total',
+      pick: 'Over 2.5',
+      edgePct: 16.5,
+      modelProb: 0.612,
+      marketKey: 'total',
+      side: 'over',
+    },
+  };
+
+  const mockPrediction: Prediction = {
+    id: 'pred-2',
+    fixture_id: 'fix-epl-1',
+    sport: 'football',
+    league_id: 'soccer_epl',
+    league_name: 'Premier League',
+    market_type: 'match_total',
+    match_title: 'Arsenal vs Chelsea',
+    selection: 'Over',
+    line: 2.5,
+    best_bookmaker: 'Bet365',
+    sportsbook_odds: 1.91,
+    fair_odds: 1.639,
+    implied_probability: 0.5236,
+    model_probability: 0.61,
+    ev_percentage: 16.5,
+    edge_score: 89.0,
+    recommended_units: 2.0,
+    tier: 'free',
+    status: 'pending',
+    commence_time: 'Today, 12:30 PM ET',
+  };
+
+  it('ensures Chelsea vs Arsenal hero and featured card yield the exact same edge for Total Goals', () => {
+    // 1. Hero card resolves edge via prediction
+    const heroEdge = getFixtureMarketEdge(mockFixture, mockPrediction, [mockPrediction]);
+
+    // 2. Featured card resolves edge via fixture + predictions list
+    const featuredEdge = getFixtureMarketEdge(mockFixture, undefined, [mockPrediction]);
+
+    // Both must match exactly: 16.5%
+    assert.equal(heroEdge.edgePct, 16.5);
+    assert.equal(featuredEdge.edgePct, 16.5);
+    assert.equal(heroEdge.edgePct, featuredEdge.edgePct);
+
+    // Both must label the market as Total Goals (not generic 'Model Edge')
+    assert.equal(heroEdge.marketLabel, 'Total 2.5');
+    assert.equal(featuredEdge.marketLabel, 'Total 2.5');
+  });
+
+  it('labels specific markets and returns distinct numbers when queried by market', () => {
+    // Querying total market
+    const totalEdge = getFixtureMarketEdge(mockFixture, 'total', [mockPrediction]);
+    assert.equal(totalEdge.edgePct, 16.5);
+    assert.equal(totalEdge.marketLabel, 'Total 2.5');
+
+    // Querying moneyline on a fixture with moneyline edge
+    const mlFixture: MatchFixture = {
+      ...mockFixture,
+      modelEdge: {
+        market: 'Moneyline',
+        pick: 'Chelsea ML',
+        edgePct: 7.2,
+        modelProb: 0.448,
+        marketKey: 'moneyline',
+        side: 'away',
+      },
+    };
+    const mlEdge = getFixtureMarketEdge(mlFixture, 'moneyline');
+    assert.equal(mlEdge.edgePct, 7.2);
+    assert.equal(mlEdge.marketLabel, 'Moneyline');
+  });
+
+  it('formats various market labels cleanly', () => {
+    assert.equal(formatMarketLabel('match_total', 'Over 2.5', 2.5), 'Total 2.5');
+    assert.equal(formatMarketLabel('moneyline'), 'Moneyline');
+    assert.equal(formatMarketLabel('spread', undefined, -3.5), 'Spread -3.5');
+    assert.equal(formatMarketLabel('player_points'), 'Player Points');
   });
 });
