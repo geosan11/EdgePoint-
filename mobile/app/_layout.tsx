@@ -1,3 +1,4 @@
+import '../global.css';
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
@@ -48,6 +49,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="match/[id]" options={{ headerShown: false }} />
         </Stack>
         <PaywallModal />
       </View>
