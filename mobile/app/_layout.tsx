@@ -1,14 +1,16 @@
+import '../global.css';
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Header } from '../components/Header';
+import { Header, isLightScreenRoute } from '../components/Header';
 import { PaywallModal } from '../components/PaywallModal';
 import { checkProEntitlement, initRevenueCat } from '../lib/revenuecat';
 import { useBetStore } from '../stores/useBetStore';
 import { useTheme } from '../stores/useThemeStore';
+import { darkTokens, lightTokens } from '../theme/tokens';
 import { useAppFonts } from '../theme/fonts';
 
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +19,11 @@ export default function RootLayout() {
   const setPro = useBetStore((state) => state.setPro);
   const { tokens, scheme } = useTheme();
   const fontsLoaded = useAppFonts();
+  const pathname = usePathname();
+  const segments = useSegments();
+
+  const isLight = isLightScreenRoute(pathname, segments) || scheme === 'light';
+  const activeBg = isLight ? lightTokens.colors.background : tokens.colors.background;
 
   useEffect(() => {
     (async () => {
@@ -38,16 +45,17 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <View style={[styles.container, { backgroundColor: tokens.colors.background }]} onLayout={onLayoutRootView}>
-        <StatusBar style={scheme === 'light' ? 'dark' : 'light'} backgroundColor={tokens.colors.background} />
+      <View style={[styles.container, { backgroundColor: activeBg }]} onLayout={onLayoutRootView}>
+        <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={activeBg} />
         <Header />
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: tokens.colors.background },
+            contentStyle: { backgroundColor: activeBg },
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="match/[id]" options={{ headerShown: false }} />
         </Stack>
         <PaywallModal />
       </View>

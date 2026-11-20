@@ -1,3 +1,4 @@
+import React, { createContext, useContext } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,6 +7,8 @@ import { darkTokens, lightTokens, ThemeTokens } from '../theme/tokens';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ThemeScheme = 'light' | 'dark';
+
+export const ThemeContext = createContext<ThemeTokens | null>(null);
 
 interface ThemeState {
   mode: ThemeMode;
@@ -31,11 +34,12 @@ export function useTheme(): {
   scheme: ThemeScheme;
   setMode: (mode: ThemeMode) => void;
 } {
+  const contextTokens = useContext(ThemeContext);
   const mode = useThemeStore((state) => state.mode);
   const setMode = useThemeStore((state) => state.setMode);
   const systemScheme = useColorScheme();
   const scheme: ThemeScheme = mode === 'system' ? (systemScheme === 'light' ? 'light' : 'dark') : mode;
-  const tokens = scheme === 'light' ? lightTokens : darkTokens;
+  const tokens = contextTokens ?? (scheme === 'light' ? lightTokens : darkTokens);
 
   return { tokens, mode, scheme, setMode };
 }

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import {
+  BarChart3,
+  ChevronRight,
   CircleDollarSign,
   Crown,
+  Layers,
+  MessageSquareQuote,
   Palette,
   PenSquare,
   Settings2,
@@ -17,9 +22,11 @@ import { CreatePostModal } from '../../components/CreatePostModal';
 import { Badge, Button, Card, MetricTile, Text } from '../../components/ui';
 import { useBetStore } from '../../stores/useBetStore';
 import { useCommunityStore } from '../../stores/useCommunityStore';
-import { ThemeMode, useTheme } from '../../stores/useThemeStore';
+import { ThemeContext, ThemeMode, useTheme } from '../../stores/useThemeStore';
+import { lightTokens } from '../../theme/tokens';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const {
     isPro,
     toggleProMock,
@@ -34,8 +41,10 @@ export default function ProfileScreen() {
     setKellyFraction,
     minEdgeScore,
     setMinEdgeScore,
+    slipLegs,
   } = useBetStore();
-  const { tokens, mode, setMode } = useTheme();
+  const { mode, setMode } = useTheme();
+  const tokens = lightTokens;
   const { tipsters, subscribedTipsterIds, unsubscribeFromTipster } = useCommunityStore();
 
   const [bankrollInput, setBankrollInput] = useState(bankroll.toString());
@@ -87,11 +96,76 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: tokens.colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <ThemeContext.Provider value={lightTokens}>
+      <ScrollView
+        style={[styles.screen, { backgroundColor: tokens.colors.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+      {/* 0. Hub & Sub-Screens Navigation */}
+      <Card style={styles.card}>
+        <Text variant="title" style={styles.cardHeaderTitle}>
+          Hub & Quick Links
+        </Text>
+        <Text variant="bodySm" tone="secondary" style={styles.cardHeaderSub}>
+          Access your tracked tickets, analytical record, and community intel
+        </Text>
+
+        <View style={styles.quickLinksContainer}>
+          <TouchableOpacity
+            style={[styles.quickLinkRow, { borderBottomColor: tokens.colors.border }]}
+            onPress={() => router.push('/(tabs)/tracker')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: tokens.colors.primarySoft }]}>
+              <Layers size={18} color={tokens.colors.primary} />
+            </View>
+            <View style={styles.quickLinkText}>
+              <Text variant="headlineSm" style={styles.quickLinkTitle}>Watchlist & Betslip</Text>
+              <Text variant="bodySm" tone="secondary">Active legs and ticket builder</Text>
+            </View>
+            {slipLegs.length > 0 && (
+              <Badge
+                label={`${slipLegs.length} ${slipLegs.length === 1 ? 'leg' : 'legs'}`}
+                tone="positive"
+                style={styles.badgeMargin}
+              />
+            )}
+            <ChevronRight size={18} color={tokens.colors.textTertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickLinkRow, { borderBottomColor: tokens.colors.border }]}
+            onPress={() => router.push('/(tabs)/record')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: tokens.colors.secondarySoft }]}>
+              <BarChart3 size={18} color={tokens.colors.secondary} />
+            </View>
+            <View style={styles.quickLinkText}>
+              <Text variant="headlineSm" style={styles.quickLinkTitle}>Track Record</Text>
+              <Text variant="bodySm" tone="secondary">Historical CLV and ROI verification</Text>
+            </View>
+            <ChevronRight size={18} color={tokens.colors.textTertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickLinkRow, { borderBottomWidth: 0 }]}
+            onPress={() => router.push('/(tabs)/insights')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+              <Users size={18} color="#F59E0B" />
+            </View>
+            <View style={styles.quickLinkText}>
+              <Text variant="headlineSm" style={styles.quickLinkTitle}>Community Intel</Text>
+              <Text variant="bodySm" tone="secondary">Verified sharp consensus and feed</Text>
+            </View>
+            <ChevronRight size={18} color={tokens.colors.textTertiary} />
+          </TouchableOpacity>
+        </View>
+      </Card>
+
       {/* 1. Account Summary Card */}
       <Card style={styles.card}>
         <View style={styles.userHeader}>
@@ -397,6 +471,7 @@ export default function ProfileScreen() {
 
       <CreatePostModal visible={createPostVisible} onClose={() => setCreatePostVisible(false)} />
     </ScrollView>
+  </ThemeContext.Provider>
   );
 }
 
@@ -546,5 +621,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
+  },
+  cardHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  cardHeaderSub: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  quickLinksContainer: {
+    gap: 0,
+  },
+  quickLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  quickLinkIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickLinkText: {
+    flex: 1,
+  },
+  quickLinkTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  badgeMargin: {
+    marginRight: 6,
   },
 });
